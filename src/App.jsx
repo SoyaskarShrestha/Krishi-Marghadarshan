@@ -1,11 +1,11 @@
 ﻿import { Navigate, Route, Routes } from 'react-router-dom'
-import Articles from './Articles'
-import Cart from './Cart'
-import Homepage from './Homepage'
-import Profile from './Profile'
-import Shop from './Shop'
-import UserProfile from './UserProfile'
-import WeatherForecast from './WeatherForecast'
+import Articles from './Components/Articles'
+import Cart from './Components/Cart'
+import Homepage from './Components/Homepage'
+import Advisory from './Components/Advisory'
+import Shop from './Components/Shop'
+import UserProfile from './Components/UserProfile'
+import WeatherForecast from './Components/WeatherForecast'
 
 function App() {
 	return (
@@ -15,7 +15,7 @@ function App() {
 			<Route path="/articles" element={<Articles />} />
 			<Route path="/shop" element={<Shop />} />
 			<Route path="/cart" element={<Cart />} />
-			<Route path="/profile" element={<Profile />} />
+			<Route path="/advisory" element={<Advisory />} />
 			<Route path="/user-profile" element={<UserProfile />} />
 			<Route path="*" element={<Navigate to="/" replace />} />
 		</Routes>
@@ -23,3 +23,4 @@ function App() {
 }
 
 export default App
+
