@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom'
 import './Shop.css'
 import NavBar from './NavBar'
+import Footer from './Footer'
 import heroImage from '../assets/shop/hero.png'
 import exploreArrowIcon from '../assets/shop/icons/explore-arrow.svg'
 import adviceGearIcon from '../assets/shop/icons/advice-gear.svg'
@@ -213,18 +214,23 @@ function Shop() {
 				</section>
 			</main>
 
-			<footer className="shop-footer" data-node-id="2:414">
-				<div className="shop-shell shop-footer-inner" data-node-id="2:415">
-					<div className="shop-footer-brand">Krishi Margadarshan</div>
-					<div className="shop-footer-links">
-						<Link to="/advisory">Support Centers</Link>
-						<Link to="/articles">FAQ</Link>
-						<Link to="/advisory">Privacy</Link>
-						<Link to="/advisory">Contact</Link>
-					</div>
-					<div className="shop-footer-copy">© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP</div>
-				</div>
-			</footer>
+			<Footer
+				footerClassName="shop-footer"
+				innerClassName="shop-shell shop-footer-inner"
+				linksClassName="shop-footer-links"
+				brand="Krishi Margadarshan"
+				copy="© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP"
+				brandClassName="shop-footer-brand"
+				copyClassName="shop-footer-copy"
+				footerProps={{ 'data-node-id': '2:414' }}
+				innerProps={{ 'data-node-id': '2:415' }}
+				links={[
+					{ to: '/advisory', label: 'Support Centers' },
+					{ to: '/articles', label: 'FAQ' },
+					{ to: '/advisory', label: 'Privacy' },
+					{ to: '/advisory', label: 'Contact' },
+				]}
+			/>
 		</div>
 	)
 }

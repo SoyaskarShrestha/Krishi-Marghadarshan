@@ -1,8 +1,10 @@
 ﻿import { NavLink } from 'react-router-dom'
 import bagIcon from '../assets/navbar/bag.svg'
 import languageIcon from '../assets/navbar/language.svg'
+import profileSimpleIcon from '../assets/navbar/profile-simple.svg'
 import searchIcon from '../assets/navbar/search.svg'
-import settingsIcon from '../assets/navbar/settings.svg'
+import { useLanguage } from '../context/LanguageContext'
+
 import './NavBar.css'
 
 function NavBar({
@@ -11,14 +13,37 @@ function NavBar({
 	showLanguage = true,
 	showCart = false,
 	cartCount = 0,
-	showSettings = false,
 }) {
+	const { isNepali, toggleLanguage } = useLanguage()
+
+	const labels = isNepali
+		? {
+			brand: 'कृषि मार्गदर्शन',
+			home: 'गृहपृष्ठ',
+			weather: 'मौसम',
+			articles: 'लेख',
+			shop: 'पसल',
+			advisory: 'सल्लाह',
+			language: 'English',
+			profile: 'प्रोफाइल',
+		}
+		: {
+			brand: 'Krishi Margadarshan',
+			home: 'Home',
+			weather: 'Weather',
+			articles: 'Articles',
+			shop: 'Shop',
+			advisory: 'Advisory',
+			language: 'नेपाली',
+			profile: 'Profile',
+		}
+
 	return (
 		<header className="navbar">
 			<div className="navbar-shell">
 				<div className="navbar-brand-group">
 					<NavLink to="/" end className="navbar-brand-link">
-						<h1 className="navbar-brand">Krishi Margadarshan</h1>
+						<h1 className="navbar-brand">{labels.brand}</h1>
 					</NavLink>
 					{showSearch ? (
 						<div className="navbar-search" role="search" aria-label="Search">
@@ -31,21 +56,21 @@ function NavBar({
 				</div>
 
 				<nav className="navbar-nav" aria-label="Main navigation">
-					<NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>Home</NavLink>
-					<NavLink to="/weather" className={({ isActive }) => (isActive ? 'active' : '')}>Weather</NavLink>
-					<NavLink to="/articles" className={({ isActive }) => (isActive ? 'active' : '')}>Articles</NavLink>
-					<NavLink to="/shop" className={({ isActive }) => (isActive ? 'active' : '')}>Shop</NavLink>
-					<NavLink to="/advisory" className={({ isActive }) => (isActive ? 'active' : '')}>Advisory</NavLink>
+					<NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>{labels.home}</NavLink>
+					<NavLink to="/weather" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.weather}</NavLink>
+					<NavLink to="/articles" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.articles}</NavLink>
+					<NavLink to="/shop" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.shop}</NavLink>
+					<NavLink to="/advisory" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.advisory}</NavLink>
 				</nav>
 
 				<div className="navbar-actions">
 					{showLanguage ? (
-						<div className="navbar-language">
+						<button type="button" className="navbar-language" onClick={toggleLanguage}>
 							<span className="navbar-inline-icon">
 								<img src={languageIcon} alt="" aria-hidden="true" className="navbar-icon-image" />
 							</span>
-							<span>Language</span>
-						</div>
+							<span>{labels.language}</span>
+						</button>
 					) : null}
 					{showCart ? (
 						<NavLink to="/cart" className="navbar-bag" aria-label="Cart">
@@ -56,18 +81,9 @@ function NavBar({
 				
 					<NavLink to="/user-profile" className="navbar-profile-link" aria-label="Profile">
 						<span className="navbar-inline-icon navbar-profile-icon" aria-hidden="true">
-							<svg viewBox="0 0 24 24" className="navbar-icon-svg" focusable="false">
-								<path
-									d="M12 12.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2.2c-4.4 0-8 2.4-8 5.4V21h16v-.9c0-3-3.6-5.4-8-5.4Z"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="1.7"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								/>
-							</svg>
+							<img src={profileSimpleIcon} alt="" className="navbar-icon-image" />
 						</span>
-						<span>Profile</span>
+						<span>{labels.profile}</span>
 					</NavLink>
 				</div>
 			</div>

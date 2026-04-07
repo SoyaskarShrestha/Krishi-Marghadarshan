@@ -6,19 +6,22 @@ import Advisory from './Components/Advisory'
 import Shop from './Components/Shop'
 import UserProfile from './Components/UserProfile'
 import WeatherForecast from './Components/WeatherForecast'
+import { LanguageProvider } from './context/LanguageContext'
 
 function App() {
 	return (
-		<Routes>
-			<Route path="/" element={<Homepage />} />
-			<Route path="/weather" element={<WeatherForecast />} />
-			<Route path="/articles" element={<Articles />} />
-			<Route path="/shop" element={<Shop />} />
-			<Route path="/cart" element={<Cart />} />
-			<Route path="/advisory" element={<Advisory />} />
-			<Route path="/user-profile" element={<UserProfile />} />
-			<Route path="*" element={<Navigate to="/" replace />} />
-		</Routes>
+		<LanguageProvider>
+			<Routes>
+				<Route path="/" element={<Homepage />} />
+				<Route path="/weather" element={<WeatherForecast />} />
+				<Route path="/articles" element={<Articles />} />
+				<Route path="/shop" element={<Shop />} />
+				<Route path="/cart" element={<Cart />} />
+				<Route path="/advisory" element={<Advisory />} />
+				<Route path="/user-profile" element={<UserProfile />} />
+				<Route path="*" element={<Navigate to="/" replace />} />
+			</Routes>
+		</LanguageProvider>
 	)
 }
 

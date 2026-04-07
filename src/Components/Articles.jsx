@@ -1,6 +1,7 @@
 ﻿import { Link } from 'react-router-dom'
 import './Articles.css'
 import NavBar from './NavBar'
+import Footer from './Footer'
 import riceFieldsImage from '../assets/articles/rice-fields.jpg'
 import soilHealthImage from '../assets/articles/soil-health.jpg'
 import pestManagementImage from '../assets/articles/pest-management.jpg'
@@ -176,18 +177,20 @@ function Articles() {
 				</div>
 			</main>
 
-			<footer className="articles-footer" data-node-id="2:919">
-				<div className="articles-shell articles-footer-inner">
-					<strong>Krishi Margadarshan</strong>
-					<div className="articles-footer-links">
-						<Link to="/advisory">Support Centers</Link>
-						<Link to="/articles">FAQ</Link>
-						<Link to="/advisory">Privacy</Link>
-						<Link to="/advisory">Contact</Link>
-					</div>
-					<p>© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP</p>
-				</div>
-			</footer>
+			<Footer
+				footerClassName="articles-footer"
+				innerClassName="articles-shell articles-footer-inner"
+				linksClassName="articles-footer-links"
+				brand="Krishi Margadarshan"
+				copy="© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP"
+				footerProps={{ 'data-node-id': '2:919' }}
+				links={[
+					{ to: '/advisory', label: 'Support Centers' },
+					{ to: '/articles', label: 'FAQ' },
+					{ to: '/advisory', label: 'Privacy' },
+					{ to: '/advisory', label: 'Contact' },
+				]}
+			/>
 		</div>
 	)
 }

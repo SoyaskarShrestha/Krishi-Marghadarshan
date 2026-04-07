@@ -1,6 +1,7 @@
 ﻿import { Link } from 'react-router-dom'
 import './Homepage.css'
 import NavBar from './NavBar'
+import Footer from './Footer'
 import featuredImage from '../assets/homepage/featured.jpg'
 import heroImage from '../assets/homepage/hero.jpg'
 import advisoryIcon from '../assets/homepage/icons/advisory.svg'
@@ -202,20 +203,22 @@ function Homepage() {
 				</section>
 			</main>
 
-			<footer className="home-footer" data-node-id="2:593">
-				<div className="home-wrap home-footer-inner" data-node-id="2:594">
-					<div>
-						<strong>Krishi Margadarshan</strong>
-						<p>© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP</p>
-					</div>
-					<div className="home-footer-links">
-						<Link to="/advisory">Support Centers</Link>
-						<Link to="/articles">FAQ</Link>
-						<Link to="/advisory">Privacy</Link>
-						<Link to="/advisory">Contact</Link>
-					</div>
-				</div>
-			</footer>
+			<Footer
+				footerClassName="home-footer"
+				innerClassName="home-wrap home-footer-inner"
+				linksClassName="home-footer-links"
+				brand="Krishi Margadarshan"
+				copy="© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP"
+				wrapBrandCopy
+				footerProps={{ 'data-node-id': '2:593' }}
+				innerProps={{ 'data-node-id': '2:594' }}
+				links={[
+					{ to: '/advisory', label: 'Support Centers' },
+					{ to: '/articles', label: 'FAQ' },
+					{ to: '/advisory', label: 'Privacy' },
+					{ to: '/advisory', label: 'Contact' },
+				]}
+			/>
 		</div>
 	)
 }

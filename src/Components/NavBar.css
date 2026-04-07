@@ -100,8 +100,13 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  border: 0;
+  background: transparent;
+  padding: 0;
   color: #184a1c;
   font-size: 0.9rem;
+  font: inherit;
+  cursor: pointer;
 }
 
 .navbar-bag {

@@ -1,6 +1,7 @@
 ﻿import { Link } from 'react-router-dom'
 import './UserProfile.css'
 import NavBar from './NavBar'
+import Footer from './Footer'
 import userProfileImage from '../assets/user-profile/user-profile.jpg'
 import savedArticleImage1 from '../assets/user-profile/saved-article-1.jpg'
 import savedArticleImage2 from '../assets/user-profile/saved-article-2.jpg'
@@ -145,18 +146,21 @@ function UserProfile() {
 				</section>
 			</main>
 
-			<footer className="member-footer">
-				<div className="member-shell member-footer-inner">
-					<div className="member-footer-brand">Krishi Margadarshan</div>
-					<div className="member-footer-links">
-						<Link to="/advisory">Support Centers</Link>
-						<Link to="/articles">FAQ</Link>
-						<Link to="/advisory">Privacy</Link>
-						<Link to="/advisory">Contact</Link>
-					</div>
-					<div className="member-footer-copy">© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP</div>
-				</div>
-			</footer>
+			<Footer
+				footerClassName="member-footer"
+				innerClassName="member-shell member-footer-inner"
+				linksClassName="member-footer-links"
+				brand="Krishi Margadarshan"
+				copy="© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP"
+				brandClassName="member-footer-brand"
+				copyClassName="member-footer-copy"
+				links={[
+					{ to: '/advisory', label: 'Support Centers' },
+					{ to: '/articles', label: 'FAQ' },
+					{ to: '/advisory', label: 'Privacy' },
+					{ to: '/advisory', label: 'Contact' },
+				]}
+			/>
 		</div>
 	)
 }

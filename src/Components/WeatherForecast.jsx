@@ -1,6 +1,7 @@
 ﻿import { Link } from 'react-router-dom'
 import './WeatherForecast.css'
 import NavBar from './NavBar'
+import Footer from './Footer'
 import autoDetectIcon from '../assets/weather/icons/auto-detect.svg'
 import cloudIcon from '../assets/weather/icons/cloud.svg'
 import dayCloudyIcon from '../assets/weather/icons/day-cloudy.svg'
@@ -151,18 +152,19 @@ function WeatherForecast() {
 				</section>
 			</main>
 
-			<footer className="weather-footer">
-				<div className="weather-shell weather-footer-inner">
-					<strong>Krishi Margadarshan</strong>
-					<div className="weather-footer-links">
-						<Link to="/advisory">Support Centers</Link>
-						<Link to="/articles">FAQ</Link>
-						<Link to="/advisory">Privacy</Link>
-						<Link to="/advisory">Contact</Link>
-					</div>
-					<p>© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP</p>
-				</div>
-			</footer>
+			<Footer
+				footerClassName="weather-footer"
+				innerClassName="weather-shell weather-footer-inner"
+				linksClassName="weather-footer-links"
+				brand="Krishi Margadarshan"
+				copy="© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP"
+				links={[
+					{ to: '/advisory', label: 'Support Centers' },
+					{ to: '/articles', label: 'FAQ' },
+					{ to: '/advisory', label: 'Privacy' },
+					{ to: '/advisory', label: 'Contact' },
+				]}
+			/>
 		</div>
 	)
 }
