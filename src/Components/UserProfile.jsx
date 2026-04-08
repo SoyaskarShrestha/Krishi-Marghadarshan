@@ -1,7 +1,11 @@
-﻿import { Link } from 'react-router-dom'
+﻿import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import './UserProfile.css'
 import NavBar from './NavBar'
 import Footer from './Footer'
+import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 import userProfileImage from '../assets/user-profile/user-profile.jpg'
 import savedArticleImage1 from '../assets/user-profile/saved-article-1.jpg'
 import savedArticleImage2 from '../assets/user-profile/saved-article-2.jpg'
@@ -55,28 +59,109 @@ function LanguageIcon() {
 }
 
 function UserProfile() {
+	const navigate = useNavigate()
+	const { currentUser, logout, updateProfile } = useAuth()
+	const { isNepali, setLanguage } = useLanguage()
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+	const [editError, setEditError] = useState('')
+	const [saveSuccessMessage, setSaveSuccessMessage] = useState('')
+	const [editForm, setEditForm] = useState({
+		username: currentUser?.name || '',
+		fullName: currentUser?.profile?.fullName || '',
+		location: currentUser?.profile?.location || '',
+		cropType: currentUser?.profile?.cropType || '',
+		phone: currentUser?.profile?.phone || '',
+	})
+
+	const displayName = currentUser?.name || 'Farmer User'
+	const displayFullName = currentUser?.profile?.fullName || displayName
+	const displayPhone = currentUser?.profile?.phone || '+977 9841234567'
+	const displayLocation = currentUser?.profile?.location || 'Chitwan, Nepal'
+	const displayCropType = currentUser?.profile?.cropType || 'Rice & Mustard'
+
+	useEffect(() => {
+		setEditForm({
+			username: currentUser?.name || '',
+			fullName: currentUser?.profile?.fullName || '',
+			location: currentUser?.profile?.location || '',
+			cropType: currentUser?.profile?.cropType || '',
+			phone: currentUser?.profile?.phone || '',
+		})
+	}, [currentUser])
+
+	useEffect(() => {
+		if (!saveSuccessMessage) {
+			return undefined
+		}
+
+		const timer = window.setTimeout(() => {
+			setSaveSuccessMessage('')
+		}, 2500)
+
+		return () => window.clearTimeout(timer)
+	}, [saveSuccessMessage])
+
+	const handleEditInputChange = (event) => {
+		const { name, value } = event.target
+		setEditForm((previous) => ({ ...previous, [name]: value }))
+	}
+
+	const handleEditSave = (event) => {
+		event.preventDefault()
+		const result = updateProfile({
+			email: currentUser?.email || '',
+			username: editForm.username,
+			fullName: editForm.fullName,
+			location: editForm.location,
+			cropType: editForm.cropType,
+			phone: editForm.phone,
+		})
+
+		if (!result.ok) {
+			setEditError(result.message)
+			return
+		}
+
+		setEditError('')
+		setSaveSuccessMessage('Profile details updated successfully.')
+		setIsEditModalOpen(false)
+	}
+
+	const handleLogout = () => {
+		logout()
+		navigate('/login', { replace: true })
+	}
+
 	return (
 		<div className="member-page">
 			<NavBar showSettings />
 
 			<main className="member-shell member-main">
+				{saveSuccessMessage ? <div className="member-save-success">{saveSuccessMessage}</div> : null}
+
 				<section className="member-profile-card">
 					<div className="member-avatar-wrap">
 						<div className="member-avatar-circle">
 							<img src={userProfileImage} alt="Rajesh Hamal" />
 						</div>
-						<button type="button" className="member-avatar-edit" aria-label="Edit profile">
+						<button
+							type="button"
+							className="member-avatar-edit"
+							aria-label="Edit profile"
+							onClick={() => setIsEditModalOpen(true)}
+						>
 							<img src={editIcon} alt="" aria-hidden="true" className="member-icon-svg" />
 						</button>
 					</div>
 
 					<div className="member-profile-copy">
 						<span className="member-badge">PREMIUM MEMBER</span>
-						<h2>Rajesh Hamal</h2>
-						<div className="member-phone-row"><span className="member-inline-icon"><PhoneIcon /></span><span>+977 9841234567</span></div>
+						<h2>{displayName}</h2>
+						<p className="member-real-name">{displayFullName}</p>
+						<div className="member-phone-row"><span className="member-inline-icon"><PhoneIcon /></span><span>{displayPhone}</span></div>
 						<div className="member-tags">
-							<div className="member-tag"><span className="member-inline-icon"><PinIcon /></span><span>Chitwan, Nepal</span></div>
-							<div className="member-tag"><span className="member-inline-icon"><CropIcon /></span><span>Rice &amp; Mustard</span></div>
+							<div className="member-tag"><span className="member-inline-icon"><PinIcon /></span><span>{displayLocation}</span></div>
+							<div className="member-tag"><span className="member-inline-icon"><CropIcon /></span><span>{displayCropType}</span></div>
 						</div>
 					</div>
 				</section>
@@ -100,11 +185,26 @@ function UserProfile() {
 					<article className="member-card member-language-card">
 						<div className="member-card-icon white"><LanguageIcon /></div>
 						<h3>Language Settings</h3>
-						<div className="member-language-toggle english">
+						<button
+							type="button"
+							className={`member-language-toggle english ${!isNepali ? 'active' : 'inactive'}`}
+							onClick={() => setLanguage('en')}
+						>
 							<span>English</span>
-							<span className="member-language-check"><img src={checkIcon} alt="" aria-hidden="true" className="member-icon-svg" /></span>
-						</div>
-						<div className="member-language-toggle nepali">नेपाली (Nepali)</div>
+							{!isNepali ? (
+								<span className="member-language-check"><img src={checkIcon} alt="" aria-hidden="true" className="member-icon-svg" /></span>
+							) : null}
+						</button>
+						<button
+							type="button"
+							className={`member-language-toggle nepali ${isNepali ? 'active' : 'inactive'}`}
+							onClick={() => setLanguage('ne')}
+						>
+							<span>नेपाली (Nepali)</span>
+							{isNepali ? (
+								<span className="member-language-check"><img src={checkIcon} alt="" aria-hidden="true" className="member-icon-svg" /></span>
+							) : null}
+						</button>
 					</article>
 				</section>
 
@@ -138,13 +238,52 @@ function UserProfile() {
 				</section>
 
 				<section className="member-logout-section">
-					<button type="button" className="member-logout-button">
+					<button type="button" className="member-logout-button" onClick={handleLogout}>
 						<span className="member-logout-icon"><LogoutIcon /></span>
 						<span>Logout from Account</span>
 					</button>
 					<p>Krishi Margadarshan App Version 2.4.0 (Stable)</p>
 				</section>
 			</main>
+
+			{isEditModalOpen ? (
+				<div className="member-edit-overlay" role="dialog" aria-modal="true" aria-labelledby="member-edit-title">
+					<form className="member-edit-card" onSubmit={handleEditSave}>
+						<h3 id="member-edit-title">Edit Profile Details</h3>
+						{editError ? <p className="member-edit-error">{editError}</p> : null}
+
+						<label htmlFor="edit-username">
+							Username
+							<input id="edit-username" name="username" type="text" value={editForm.username} onChange={handleEditInputChange} required />
+						</label>
+
+						<label htmlFor="edit-fullName">
+							Real Name
+							<input id="edit-fullName" name="fullName" type="text" value={editForm.fullName} onChange={handleEditInputChange} required />
+						</label>
+
+						<label htmlFor="edit-location">
+							Location
+							<input id="edit-location" name="location" type="text" value={editForm.location} onChange={handleEditInputChange} required />
+						</label>
+
+						<label htmlFor="edit-cropType">
+							Agriculture / Crops
+							<input id="edit-cropType" name="cropType" type="text" value={editForm.cropType} onChange={handleEditInputChange} required />
+						</label>
+
+						<label htmlFor="edit-phone">
+							Phone Number
+							<input id="edit-phone" name="phone" type="tel" value={editForm.phone} onChange={handleEditInputChange} required />
+						</label>
+
+						<div className="member-edit-actions">
+							<button type="button" className="member-edit-cancel" onClick={() => setIsEditModalOpen(false)}>Cancel</button>
+							<button type="submit" className="member-edit-save">Save Changes</button>
+						</div>
+					</form>
+				</div>
+			) : null}
 
 			<Footer
 				footerClassName="member-footer"

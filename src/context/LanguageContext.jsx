@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useState } from 'react'
 
 const LanguageContext = createContext(null)
 
@@ -14,20 +14,24 @@ function getInitialLanguage() {
 export function LanguageProvider({ children }) {
 	const [language, setLanguage] = useState(getInitialLanguage)
 
-	const toggleLanguage = () => {
-		setLanguage((prev) => {
-			const next = prev === 'en' ? 'ne' : 'en'
-			if (typeof window !== 'undefined') {
-				window.localStorage.setItem('app-language', next)
-			}
-			return next
-		})
+	const setAppLanguage = (nextLanguage) => {
+		const normalizedNext = nextLanguage === 'ne' ? 'ne' : 'en'
+		setLanguage(normalizedNext)
+		if (typeof window !== 'undefined') {
+			window.localStorage.setItem('app-language', normalizedNext)
+		}
 	}
 
-	const value = useMemo(
-		() => ({ language, isNepali: language === 'ne', toggleLanguage }),
-		[language]
-	)
+	const toggleLanguage = () => {
+		setAppLanguage(language === 'en' ? 'ne' : 'en')
+	}
+
+	const value = {
+		language,
+		isNepali: language === 'ne',
+		toggleLanguage,
+		setLanguage: setAppLanguage,
+	}
 
 	return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
 }

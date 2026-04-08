@@ -6,22 +6,39 @@ import Advisory from './Components/Advisory'
 import Shop from './Components/Shop'
 import UserProfile from './Components/UserProfile'
 import WeatherForecast from './Components/WeatherForecast'
+import SignUp from './Components/SignUp'
+import Login from './Components/Login'
+import ProtectedRoute from './Components/ProtectedRoute'
+import CompleteProfile from './Components/CompleteProfile'
 import { LanguageProvider } from './context/LanguageContext'
+import { AuthProvider } from './context/AuthContext'
 
 function App() {
 	return (
-		<LanguageProvider>
-			<Routes>
-				<Route path="/" element={<Homepage />} />
-				<Route path="/weather" element={<WeatherForecast />} />
-				<Route path="/articles" element={<Articles />} />
-				<Route path="/shop" element={<Shop />} />
-				<Route path="/cart" element={<Cart />} />
-				<Route path="/advisory" element={<Advisory />} />
-				<Route path="/user-profile" element={<UserProfile />} />
-				<Route path="*" element={<Navigate to="/" replace />} />
-			</Routes>
-		</LanguageProvider>
+		<AuthProvider>
+			<LanguageProvider>
+				<Routes>
+					<Route path="/" element={<Homepage />} />
+					<Route path="/weather" element={<WeatherForecast />} />
+					<Route path="/articles" element={<Articles />} />
+					<Route path="/shop" element={<Shop />} />
+					<Route path="/cart" element={<Cart />} />
+					<Route path="/advisory" element={<Advisory />} />
+					<Route path="/signup" element={<SignUp />} />
+					<Route path="/complete-profile" element={<CompleteProfile />} />
+					<Route path="/login" element={<Login />} />
+					<Route
+						path="/user-profile"
+						element={(
+							<ProtectedRoute>
+								<UserProfile />
+							</ProtectedRoute>
+						)}
+					/>
+					<Route path="*" element={<Navigate to="/" replace />} />
+				</Routes>
+			</LanguageProvider>
+		</AuthProvider>
 	)
 }
 
