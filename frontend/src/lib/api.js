@@ -2,6 +2,21 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
 const ACCESS_TOKEN_KEY = 'krishi_access_token'
 const REFRESH_TOKEN_KEY = 'krishi_refresh_token'
 
+export const API_ENDPOINTS = {
+	AUTH_REGISTER: import.meta.env.VITE_API_AUTH_REGISTER || '/auth/register/',
+	AUTH_COMPLETE_PROFILE: import.meta.env.VITE_API_AUTH_COMPLETE_PROFILE || '/auth/complete-profile/',
+	AUTH_LOGIN: import.meta.env.VITE_API_AUTH_LOGIN || '/auth/login/',
+	AUTH_OAUTH: import.meta.env.VITE_API_AUTH_OAUTH || '/auth/oauth/',
+	AUTH_ME: import.meta.env.VITE_API_AUTH_ME || '/auth/me/',
+	AUTH_PROFILE: import.meta.env.VITE_API_AUTH_PROFILE || '/auth/profile/',
+	ARTICLES: import.meta.env.VITE_API_ARTICLES || '/articles/',
+	SHOP_PRODUCTS: import.meta.env.VITE_API_SHOP_PRODUCTS || '/shop/products/',
+	SHOP_CART: import.meta.env.VITE_API_SHOP_CART || '/shop/cart/',
+	ADVISORY_META: import.meta.env.VITE_API_ADVISORY_META || '/advisory/meta/',
+	ADVISORY_QUESTIONS: import.meta.env.VITE_API_ADVISORY_QUESTIONS || '/advisory/questions/',
+	WEATHER_FORECAST: import.meta.env.VITE_API_WEATHER_FORECAST || '/weather/forecast/',
+}
+
 export function getAccessToken() {
 	return localStorage.getItem(ACCESS_TOKEN_KEY)
 }

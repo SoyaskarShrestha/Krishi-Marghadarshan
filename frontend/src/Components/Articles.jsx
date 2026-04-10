@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import './Articles.css'
 import NavBar from './NavBar'
 import Footer from './Footer'
-import { apiRequest } from '../lib/api'
+import { API_ENDPOINTS, apiRequest } from '../lib/api'
 import riceFieldsImage from '../assets/articles/rice-fields.jpg'
 import soilHealthImage from '../assets/articles/soil-health.jpg'
 import pestManagementImage from '../assets/articles/pest-management.jpg'
@@ -70,7 +70,7 @@ function Articles() {
 
 		async function loadArticles() {
 			try {
-				const payload = await apiRequest('/articles/')
+				const payload = await apiRequest(API_ENDPOINTS.ARTICLES)
 				if (!Array.isArray(payload) || ignore) {
 					return
 				}

@@ -6,7 +6,7 @@ import NavBar from './NavBar'
 import Footer from './Footer'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
-import { apiRequest } from '../lib/api'
+import { API_ENDPOINTS, apiRequest } from '../lib/api'
 import userProfileImage from '../assets/user-profile/user-profile.jpg'
 import savedArticleImage1 from '../assets/user-profile/saved-article-1.jpg'
 import savedArticleImage2 from '../assets/user-profile/saved-article-2.jpg'
@@ -104,7 +104,7 @@ function UserProfile() {
 
 		async function loadSavedArticles() {
 			try {
-				const payload = await apiRequest('/articles/')
+				const payload = await apiRequest(API_ENDPOINTS.ARTICLES)
 				if (!Array.isArray(payload) || ignore || payload.length === 0) {
 					return
 				}

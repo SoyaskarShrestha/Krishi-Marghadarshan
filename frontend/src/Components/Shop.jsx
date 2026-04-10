@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import './Shop.css'
 import NavBar from './NavBar'
 import Footer from './Footer'
-import { apiRequest } from '../lib/api'
+import { API_ENDPOINTS, apiRequest } from '../lib/api'
 import heroImage from '../assets/shop/hero.png'
 import exploreArrowIcon from '../assets/shop/icons/explore-arrow.svg'
 import adviceGearIcon from '../assets/shop/icons/advice-gear.svg'
@@ -98,7 +98,7 @@ function Shop() {
 
 		async function loadProducts() {
 			try {
-				const payload = await apiRequest('/shop/products/')
+				const payload = await apiRequest(API_ENDPOINTS.SHOP_PRODUCTS)
 				if (!Array.isArray(payload) || ignore) {
 					return
 				}
@@ -166,7 +166,7 @@ function Shop() {
 		}
 
 		try {
-			await apiRequest('/shop/cart/', {
+			await apiRequest(API_ENDPOINTS.SHOP_CART, {
 				method: 'POST',
 				body: JSON.stringify({ product_id: product.id, quantity: 1 }),
 			})

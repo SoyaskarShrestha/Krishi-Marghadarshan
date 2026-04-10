@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import './Homepage.css'
 import NavBar from './NavBar'
 import Footer from './Footer'
-import { apiRequest } from '../lib/api'
+import { API_ENDPOINTS, apiRequest } from '../lib/api'
 import featuredImage from '../assets/homepage/featured.jpg'
 import heroImage from '../assets/homepage/hero.jpg'
 import advisoryIcon from '../assets/homepage/icons/advisory.svg'
@@ -104,8 +104,8 @@ function Homepage() {
 		async function loadHomepageData() {
 			try {
 				const [shopProducts, articles] = await Promise.all([
-					apiRequest('/shop/products/'),
-					apiRequest('/articles/'),
+					apiRequest(API_ENDPOINTS.SHOP_PRODUCTS),
+					apiRequest(API_ENDPOINTS.ARTICLES),
 				])
 
 				if (!ignore && Array.isArray(shopProducts) && shopProducts.length > 0) {

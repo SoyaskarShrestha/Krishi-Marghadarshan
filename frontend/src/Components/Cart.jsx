@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom'
 import './Cart.css'
 import NavBar from './NavBar'
-import { apiRequest } from '../lib/api'
+import { API_ENDPOINTS, apiRequest } from '../lib/api'
 import productImage1 from '../assets/homepage/product-1.jpg'
 import productImage2 from '../assets/homepage/product-2.jpg'
 import productImage3 from '../assets/homepage/product-3.jpg'
@@ -92,7 +92,7 @@ function Cart() {
 
 		async function loadCart() {
 			try {
-				const payload = await apiRequest('/shop/cart/')
+				const payload = await apiRequest(API_ENDPOINTS.SHOP_CART)
 				if (!Array.isArray(payload) || ignore) {
 					return
 				}
@@ -138,7 +138,7 @@ function Cart() {
 		}
 
 		try {
-			const payload = await apiRequest(`/shop/cart/${itemId}/`, {
+			const payload = await apiRequest(`${API_ENDPOINTS.SHOP_CART}${itemId}/`, {
 				method: 'PATCH',
 				body: JSON.stringify({ quantity: Math.max(1, nextQuantity) }),
 			})
@@ -157,7 +157,7 @@ function Cart() {
 		}
 
 		try {
-			await apiRequest(`/shop/cart/${itemId}/`, { method: 'DELETE' })
+			await apiRequest(`${API_ENDPOINTS.SHOP_CART}${itemId}/`, { method: 'DELETE' })
 			setCartItems((current) => current.filter((item) => item.id !== itemId))
 		} catch (error) {
 			setCartError(error.message)

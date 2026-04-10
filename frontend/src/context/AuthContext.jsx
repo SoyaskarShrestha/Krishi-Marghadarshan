@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { signInWithPopup } from 'firebase/auth'
 import { auth, hasFirebaseConfig, resolveOAuthProvider } from '../lib/firebaseAuth'
-import { apiRequest, clearTokens, saveTokens } from '../lib/api'
+import { API_ENDPOINTS, apiRequest, clearTokens, saveTokens } from '../lib/api'
 
 const AuthContext = createContext(null)
 
@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
 
 		async function loadCurrentUser() {
 			try {
-				const user = await apiRequest('/auth/me/')
+				const user = await apiRequest(API_ENDPOINTS.AUTH_ME)
 				if (!ignore) {
 					setCurrentUser(normalizeUser(user))
 				}
@@ -90,7 +90,7 @@ export function AuthProvider({ children }) {
 
 	const signUp = async ({ name, email, password }) => {
 		try {
-			const payload = await apiRequest('/auth/register/', {
+			const payload = await apiRequest(API_ENDPOINTS.AUTH_REGISTER, {
 				method: 'POST',
 				body: JSON.stringify({ name, email, password }),
 			})
@@ -106,7 +106,7 @@ export function AuthProvider({ children }) {
 	}
 
 	const exchangeOAuthUser = async ({ provider, oauthUser }) => {
-		const payload = await apiRequest('/auth/oauth/', {
+		const payload = await apiRequest(API_ENDPOINTS.AUTH_OAUTH, {
 			method: 'POST',
 			body: JSON.stringify({
 				provider,
@@ -155,7 +155,7 @@ export function AuthProvider({ children }) {
 
 	const updateProfile = async ({ email, username, fullName, location, cropType, phone }) => {
 		try {
-			const endpoint = currentUser ? '/auth/profile/' : '/auth/complete-profile/'
+			const endpoint = currentUser ? API_ENDPOINTS.AUTH_PROFILE : API_ENDPOINTS.AUTH_COMPLETE_PROFILE
 			const method = currentUser ? 'PUT' : 'POST'
 			const result = await apiRequest(endpoint, {
 				method,
@@ -181,7 +181,7 @@ export function AuthProvider({ children }) {
 
 	const login = async ({ email, password }) => {
 		try {
-			const payload = await apiRequest('/auth/login/', {
+			const payload = await apiRequest(API_ENDPOINTS.AUTH_LOGIN, {
 				method: 'POST',
 				body: JSON.stringify({ email, password }),
 			})

@@ -2,7 +2,7 @@
 import './WeatherForecast.css'
 import NavBar from './NavBar'
 import Footer from './Footer'
-import { apiRequest } from '../lib/api'
+import { API_ENDPOINTS, apiRequest } from '../lib/api'
 import autoDetectIcon from '../assets/weather/icons/auto-detect.svg'
 import cloudIcon from '../assets/weather/icons/cloud.svg'
 import dayCloudyIcon from '../assets/weather/icons/day-cloudy.svg'
@@ -70,7 +70,7 @@ function WeatherForecast() {
 
 	const requestForecast = async (targetLocation) => {
 		try {
-			const payload = await apiRequest(`/weather/forecast/?location=${encodeURIComponent(targetLocation)}`)
+			const payload = await apiRequest(`${API_ENDPOINTS.WEATHER_FORECAST}?location=${encodeURIComponent(targetLocation)}`)
 			setWeatherData((previous) => ({
 				...previous,
 				...payload,
@@ -85,7 +85,7 @@ function WeatherForecast() {
 		let ignore = false
 		const timer = window.setTimeout(async () => {
 			try {
-				const payload = await apiRequest(`/weather/forecast/?location=${encodeURIComponent(location)}`)
+				const payload = await apiRequest(`${API_ENDPOINTS.WEATHER_FORECAST}?location=${encodeURIComponent(location)}`)
 				if (!ignore) {
 					setWeatherData((previous) => ({
 						...previous,

@@ -2,7 +2,7 @@
 import './Advisory.css'
 import NavBar from './NavBar'
 import Footer from './Footer'
-import { apiRequest } from '../lib/api'
+import { API_ENDPOINTS, apiRequest } from '../lib/api'
 import heroImage from '../assets/advisory/hero.png'
 import floatingIcon from '../assets/advisory/icon-floating.svg'
 import benefitIcon from '../assets/advisory/icon-benefit.svg'
@@ -148,7 +148,7 @@ function Advisory() {
 
 		async function loadMeta() {
 			try {
-				const payload = await apiRequest('/advisory/meta/')
+				const payload = await apiRequest(API_ENDPOINTS.ADVISORY_META)
 				if (!ignore) {
 					setMeta(payload)
 				}
@@ -197,7 +197,7 @@ function Advisory() {
 		setSubmitError('')
 
 		try {
-			const payload = await apiRequest('/advisory/questions/', {
+			const payload = await apiRequest(API_ENDPOINTS.ADVISORY_QUESTIONS, {
 				method: 'POST',
 				body: JSON.stringify({
 					full_name: formState.fullName,

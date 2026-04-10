@@ -25,3 +25,8 @@ dist-ssr
 .venv
 .env
 .env.*.local
+
+# Python cache/build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
