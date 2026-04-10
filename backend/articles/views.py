@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import generics, mixins, permissions
 
 from .models import Article
@@ -41,7 +42,30 @@ class ArticleListCreateView(mixins.ListModelMixin, mixins.CreateModelMixin, gene
     def get_queryset(self):
         if not Article.objects.exists():
             Article.objects.bulk_create(Article(**item) for item in SEED_ARTICLES)
-        return super().get_queryset()
+
+        queryset = super().get_queryset()
+
+        query = (self.request.query_params.get("q") or "").strip()
+        category = (self.request.query_params.get("category") or "").strip()
+        language = (self.request.query_params.get("language") or "all").strip().lower()
+
+        if query:
+            queryset = queryset.filter(
+                Q(title__icontains=query)
+                | Q(title_nepali__icontains=query)
+                | Q(category__icontains=query)
+                | Q(description__icontains=query)
+            )
+
+        if category:
+            queryset = queryset.filter(category__iexact=category)
+
+        if language == "ne":
+            queryset = queryset.exclude(title_nepali="")
+        elif language == "en":
+            queryset = queryset
+
+        return queryset
 
 
     def get(self, request, *args, **kwargs):

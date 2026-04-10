@@ -89,3 +89,30 @@ class AdvisoryQuestionCreateView(mixins.CreateModelMixin, generics.GenericAPIVie
             },
             status=201,
         )
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().order_by("-created_at")
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+
+class AdvisoryQuestionDetailView(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    generics.GenericAPIView,
+):
+    queryset = AdvisoryQuestion.objects.all().order_by("-created_at")
+    serializer_class = AdvisoryQuestionSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):    
+        return self.retrieve(request, *args, **kwargs)   

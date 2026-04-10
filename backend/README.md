@@ -40,3 +40,9 @@ The React frontend should use `VITE_API_URL=http://127.0.0.1:8000/api`.
 - `GET /api/advisory/meta/`
 - `POST /api/advisory/questions/`
 - `GET /api/weather/forecast/`
+
+## Weather API
+
+- `GET /api/weather/forecast/?location=Pokhara`
+- Uses live Open-Meteo geocoding + forecast data.
+- No API key is required.

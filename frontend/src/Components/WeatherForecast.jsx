@@ -49,6 +49,11 @@ const weatherIcons = {
 	PARTLY: dayPartlyIcon,
 }
 
+const statIconByKind = {
+	humidity: humidityBadgeIcon,
+	rainfall: rainBadgeIcon,
+}
+
 function WeatherForecast() {
 	const [location, setLocation] = useState('Pokhara')
 	const [weatherData, setWeatherData] = useState({
@@ -74,10 +79,14 @@ function WeatherForecast() {
 			setWeatherData((previous) => ({
 				...previous,
 				...payload,
+				stats: (payload.stats || []).map((item) => ({
+					...item,
+					icon: statIconByKind[item.kind] || humidityBadgeIcon,
+				})),
 			}))
 			setWeatherError('')
-		} catch {
-			setWeatherError('Showing fallback forecast because weather API is unavailable.')
+		} catch (error) {
+			setWeatherError(error.message || 'Showing fallback forecast because weather API is unavailable.')
 		}
 	}
 
@@ -90,15 +99,19 @@ function WeatherForecast() {
 					setWeatherData((previous) => ({
 						...previous,
 						...payload,
+						stats: (payload.stats || []).map((item) => ({
+							...item,
+							icon: statIconByKind[item.kind] || humidityBadgeIcon,
+						})),
 					}))
 					setWeatherError('')
 				}
-			} catch {
+			} catch (error) {
 				if (!ignore) {
-					setWeatherError('Showing fallback forecast because weather API is unavailable.')
+					setWeatherError(error.message || 'Showing fallback forecast because weather API is unavailable.')
 				}
 			}
-		}, 0)
+		}, 500)
 
 		return () => {
 			ignore = true

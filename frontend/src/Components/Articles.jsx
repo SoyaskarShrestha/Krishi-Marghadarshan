@@ -14,10 +14,12 @@ import arrowRightIcon from '../assets/articles/icons/arrow-right.svg'
 import bookmarkIcon from '../assets/articles/icons/bookmark.svg'
 import dropdownIcon from '../assets/articles/icons/dropdown.svg'
 
-const tabs = [
-	{ label: 'Crop Guide (बाली गाइड)', active: true },
-	{ label: 'Pest Control (कीरा नियन्त्रण)', active: false },
-	{ label: 'Seasonal Farming (मौसमी खेती)', active: false },
+const categoryTabs = [
+	{ label: 'All', value: '' },
+	{ label: 'Crop Guide', value: 'Crop Guide' },
+	{ label: 'Pest Control', value: 'Pest Control' },
+	{ label: 'Organic Methods', value: 'Organic Methods' },
+	{ label: 'Business', value: 'Business' },
 ]
 
 const cardImages = [riceFieldsImage, soilHealthImage, pestManagementImage, marketGuideImage]
@@ -64,13 +66,30 @@ const fallbackCards = [
 function Articles() {
 	const [cards, setCards] = useState(fallbackCards)
 	const [articlesError, setArticlesError] = useState('')
+	const [isLoading, setIsLoading] = useState(false)
+	const [searchTerm, setSearchTerm] = useState('')
+	const [activeCategory, setActiveCategory] = useState('')
+	const [language, setLanguage] = useState('all')
 
 	useEffect(() => {
 		let ignore = false
 
 		async function loadArticles() {
+			setIsLoading(true)
 			try {
-				const payload = await apiRequest(API_ENDPOINTS.ARTICLES)
+				const query = new URLSearchParams()
+				if (searchTerm.trim()) {
+					query.set('q', searchTerm.trim())
+				}
+				if (activeCategory) {
+					query.set('category', activeCategory)
+				}
+				if (language) {
+					query.set('language', language)
+				}
+
+				const suffix = query.toString() ? `?${query.toString()}` : ''
+				const payload = await apiRequest(`${API_ENDPOINTS.ARTICLES}${suffix}`)
 				if (!Array.isArray(payload) || ignore) {
 					return
 				}
@@ -88,30 +107,29 @@ function Articles() {
 					readTime: article.read_time || '5 min read',
 				}))
 
-				if (mapped.length > 0) {
-					setCards(mapped)
-				}
+				setCards(mapped)
 				setArticlesError('')
-			} catch {
+			} catch (error) {
 				if (!ignore) {
-					setArticlesError('Showing sample articles because API is not reachable.')
+					setArticlesError(error.message || 'Showing sample articles because API is not reachable.')
+				}
+			} finally {
+				if (!ignore) {
+					setIsLoading(false)
 				}
 			}
 		}
 
-		loadArticles()
+		const timer = window.setTimeout(loadArticles, 300)
 
 		return () => {
 			ignore = true
+			window.clearTimeout(timer)
 		}
-	}, [])
+	}, [searchTerm, activeCategory, language])
 
 	const featuredCard = useMemo(() => cards.find((card) => card.featured) || cards[0], [cards])
-	const miniCards = useMemo(() => cards.filter((card) => card !== featuredCard).slice(0, 3), [cards, featuredCard])
-
-	if (!featuredCard) {
-		return null
-	}
+	const miniCards = useMemo(() => cards.filter((card) => card !== featuredCard), [cards, featuredCard])
 
 	return (
 		<div className="articles-page" data-node-id="2:812">
@@ -130,17 +148,24 @@ function Articles() {
 					<div className="articles-search-wrap" data-node-id="2:820">
 						<div className="articles-search-field">
 							<img src={searchIcon} alt="" aria-hidden="true" className="articles-search-icon" />
-							<span>Search articles or crops...</span>
+							<input
+								type="search"
+								value={searchTerm}
+								onChange={(event) => setSearchTerm(event.target.value)}
+								placeholder="Search articles or crops..."
+								aria-label="Search articles"
+							/>
 						</div>
 					</div>
 				</section>
 
 				<section className="articles-toolbar" data-node-id="2:825">
 					<div className="articles-tabs" aria-label="Article categories" data-node-id="2:826">
-						{tabs.map((tab) => (
+						{categoryTabs.map((tab) => (
 							<button
 								type="button"
-								className={`articles-tab ${tab.active ? 'active' : ''}`}
+								className={`articles-tab ${activeCategory === tab.value ? 'active' : ''}`}
+								onClick={() => setActiveCategory(tab.value)}
 								key={tab.label}
 							>
 								{tab.label}
@@ -150,37 +175,51 @@ function Articles() {
 
 					<div className="articles-filter-wrap" data-node-id="2:834">
 						<span className="articles-filter-label">Filter By</span>
-						<button type="button" className="articles-language-select">
-							<span>All Languages</span>
+						<button type="button" className="articles-language-select" aria-hidden="true" tabIndex={-1}>
+							<span>Language</span>
 							<img src={dropdownIcon} alt="" aria-hidden="true" />
 						</button>
+						<select
+							className="articles-language-dropdown"
+							value={language}
+							onChange={(event) => setLanguage(event.target.value)}
+							aria-label="Filter language"
+						>
+							<option value="all">All Languages</option>
+							<option value="en">English</option>
+							<option value="ne">Nepali</option>
+						</select>
 					</div>
 				</section>
 
 				{articlesError ? <p className="articles-shell">{articlesError}</p> : null}
+				{isLoading ? <p className="articles-shell">Loading articles...</p> : null}
+				{!isLoading && cards.length === 0 ? <p className="articles-shell">No articles found for the selected filters.</p> : null}
 
 				<section className="articles-grid" data-node-id="2:843">
-					<article className="articles-featured-card" data-node-id="2:844">
-						<div className="articles-featured-image-wrap">
-							<img src={featuredCard.image} alt={featuredCard.title} />
-							<span className="articles-pill">{featuredCard.badge || 'Featured'}</span>
-						</div>
-						<div className="articles-featured-copy">
-							<div className="articles-date-row">
-								<img src={filterIcon} alt="" aria-hidden="true" className="articles-date-icon" />
-								<span>{featuredCard.publishedLabel}</span>
+					{featuredCard ? (
+						<article className="articles-featured-card" data-node-id="2:844">
+							<div className="articles-featured-image-wrap">
+								<img src={featuredCard.image} alt={featuredCard.title} />
+								<span className="articles-pill">{featuredCard.badge || 'Featured'}</span>
 							</div>
-							<h3>
-								<span>{featuredCard.title}</span>
-								{featuredCard.titleNepali ? <span className="articles-featured-nepali">({featuredCard.titleNepali})</span> : null}
-							</h3>
-							<p>{featuredCard.description}</p>
-							<Link to="/articles" className="articles-read-link">
-								<span>Read Full Article</span>
-								<img src={arrowRightIcon} alt="" aria-hidden="true" />
-							</Link>
-						</div>
-					</article>
+							<div className="articles-featured-copy">
+								<div className="articles-date-row">
+									<img src={filterIcon} alt="" aria-hidden="true" className="articles-date-icon" />
+									<span>{featuredCard.publishedLabel}</span>
+								</div>
+								<h3>
+									<span>{featuredCard.title}</span>
+									{featuredCard.titleNepali ? <span className="articles-featured-nepali">({featuredCard.titleNepali})</span> : null}
+								</h3>
+								<p>{featuredCard.description}</p>
+								<Link to="/articles" className="articles-read-link">
+									<span>Read Full Article</span>
+									<img src={arrowRightIcon} alt="" aria-hidden="true" />
+								</Link>
+							</div>
+						</article>
+					) : null}
 
 					{miniCards.map((card, index) => (
 						<article className={`articles-mini-card ${index === 0 ? 'articles-card-top-right' : ''}`} data-node-id={`2:${867 + index * 16}`} key={card.id || card.title}>
