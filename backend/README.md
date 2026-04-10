@@ -26,3 +26,17 @@ The React frontend should use `VITE_API_URL=http://127.0.0.1:8000/api`.
 - `PATCH /api/articles/<id>/`
 - `DELETE /api/articles/<id>/`
 - `GET /api/shop/products/`
+- `POST /api/shop/products/`
+- `GET /api/shop/products/<id>/`
+- `PUT /api/shop/products/<id>/`
+- `PATCH /api/shop/products/<id>/`
+- `DELETE /api/shop/products/<id>/`
+- `GET /api/shop/cart/`
+- `POST /api/shop/cart/`
+- `GET /api/shop/cart/<id>/`
+- `PUT /api/shop/cart/<id>/`
+- `PATCH /api/shop/cart/<id>/`
+- `DELETE /api/shop/cart/<id>/`
+- `GET /api/advisory/meta/`
+- `POST /api/advisory/questions/`
+- `GET /api/weather/forecast/`
