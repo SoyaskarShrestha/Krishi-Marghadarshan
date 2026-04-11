@@ -21,11 +21,7 @@ import bagIcon from '../assets/user-profile/icon-bag.svg'
 import arrowRightIcon from '../assets/user-profile/icon-arrow-right.svg'
 import bagGhostIcon from '../assets/user-profile/icon-bag-ghost.svg'
 import logoutIcon from '../assets/user-profile/icon-logout.svg'
-
-const fallbackSavedArticles = [
-	{ title: 'Modern Irrigation Techniq...', image: savedArticleImage1 },
-	{ title: 'Seasonal Pest Control Gui...', image: savedArticleImage2 },
-]
+import { useTranslation } from 'react-i18next'
 
 const savedArticleImages = [savedArticleImage1, savedArticleImage2]
 
@@ -75,17 +71,21 @@ function UserProfile() {
 	const navigate = useNavigate()
 	const { currentUser, logout, updateProfile } = useAuth()
 	const { isNepali, setLanguage } = useLanguage()
+	const { t } = useTranslation()
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 	const [editError, setEditError] = useState('')
 	const [saveSuccessMessage, setSaveSuccessMessage] = useState('')
 	const [editForm, setEditForm] = useState(() => buildEditForm(currentUser))
-	const [savedArticles, setSavedArticles] = useState(fallbackSavedArticles)
+	const [savedArticles, setSavedArticles] = useState([
+		{ title: t('userProfile.savedArticlesItem1'), image: savedArticleImage1 },
+		{ title: t('userProfile.savedArticlesItem2'), image: savedArticleImage2 },
+	])
 
-	const displayName = currentUser?.name || 'Farmer User'
+	const displayName = currentUser?.name || t('userProfile.fallbackName')
 	const displayFullName = currentUser?.profile?.fullName || displayName
-	const displayPhone = currentUser?.profile?.phone || '+977 9841234567'
-	const displayLocation = currentUser?.profile?.location || 'Chitwan, Nepal'
-	const displayCropType = currentUser?.profile?.cropType || 'Rice & Mustard'
+	const displayPhone = currentUser?.profile?.phone || t('userProfile.fallbackPhone')
+	const displayLocation = currentUser?.profile?.location || t('userProfile.fallbackLocation')
+	const displayCropType = currentUser?.profile?.cropType || t('userProfile.fallbackCropType')
 
 	useEffect(() => {
 		if (!saveSuccessMessage) {
@@ -149,7 +149,7 @@ function UserProfile() {
 		}
 
 		setEditError('')
-		setSaveSuccessMessage('Profile details updated successfully.')
+		setSaveSuccessMessage(t('userProfile.editSuccess'))
 		setIsEditModalOpen(false)
 	}
 
@@ -179,7 +179,7 @@ function UserProfile() {
 						<button
 							type="button"
 							className="member-avatar-edit"
-							aria-label="Edit profile"
+							aria-label={t('userProfile.editAria')}
 							onClick={handleOpenEditModal}
 						>
 							<img src={editIcon} alt="" aria-hidden="true" className="member-icon-svg" />
@@ -187,7 +187,7 @@ function UserProfile() {
 					</div>
 
 					<div className="member-profile-copy">
-						<span className="member-badge">PREMIUM MEMBER</span>
+						<span className="member-badge">{t('userProfile.premiumMember')}</span>
 						<h2>{displayName}</h2>
 						<p className="member-real-name">{displayFullName}</p>
 						<div className="member-phone-row"><span className="member-inline-icon"><PhoneIcon /></span><span>{displayPhone}</span></div>
@@ -202,10 +202,10 @@ function UserProfile() {
 					<article className="member-card member-history-card">
 						<div className="member-card-icon green"><BagIcon /></div>
 						<div className="member-history-copy">
-							<h3>Order History</h3>
-							<p>मेरो अर्डर - Track your fertilizer and seed purchases</p>
+							<h3>{t('userProfile.orderHistory')}</h3>
+							<p>{t('userProfile.orderHistoryDescription')}</p>
 							<Link to="/cart">
-								<span>View 12 Recent Orders</span>
+								<span>{t('userProfile.viewRecentOrders')}</span>
 								<span className="member-history-arrow"><ArrowRightIcon /></span>
 							</Link>
 						</div>
@@ -216,13 +216,13 @@ function UserProfile() {
 
 					<article className="member-card member-language-card">
 						<div className="member-card-icon white"><LanguageIcon /></div>
-						<h3>Language Settings</h3>
+						<h3>{t('userProfile.languageSettings')}</h3>
 						<button
 							type="button"
 							className={`member-language-toggle english ${!isNepali ? 'active' : 'inactive'}`}
 							onClick={() => setLanguage('en')}
 						>
-							<span>English</span>
+							<span>{t('userProfile.languageEnglish')}</span>
 							{!isNepali ? (
 								<span className="member-language-check"><img src={checkIcon} alt="" aria-hidden="true" className="member-icon-svg" /></span>
 							) : null}
@@ -232,7 +232,7 @@ function UserProfile() {
 							className={`member-language-toggle nepali ${isNepali ? 'active' : 'inactive'}`}
 							onClick={() => setLanguage('ne')}
 						>
-							<span>नेपाली (Nepali)</span>
+							<span>{t('userProfile.languageNepali')}</span>
 							{isNepali ? (
 								<span className="member-language-check"><img src={checkIcon} alt="" aria-hidden="true" className="member-icon-svg" /></span>
 							) : null}
@@ -246,8 +246,8 @@ function UserProfile() {
 							<div className="member-card-icon dark"><BookmarkIcon /></div>
 							<strong>08</strong>
 						</div>
-						<h3>Saved Articles</h3>
-						<p>बचा राखिएका लेखहरू</p>
+						<h3>{t('userProfile.savedArticles')}</h3>
+						<p>{t('userProfile.savedArticlesNepali')}</p>
 						<div className="member-saved-list">
 							{savedArticles.map((article) => (
 								<div className="member-saved-item" key={article.title}>
@@ -259,59 +259,59 @@ function UserProfile() {
 					</article>
 
 					<article className="member-card member-plain-card">
-						<small>Weather Alert Location</small>
-						<h3>Chitwan Valley</h3>
+						<small>{t('userProfile.weatherAlertLocation')}</small>
+						<h3>{t('userProfile.weatherAlertValue')}</h3>
 					</article>
 
 					<article className="member-card member-plain-card">
-						<small>Consultations</small>
-						<h3>4 Available</h3>
+						<small>{t('userProfile.consultations')}</small>
+						<h3>{t('userProfile.consultationsValue')}</h3>
 					</article>
 				</section>
 
 				<section className="member-logout-section">
 					<button type="button" className="member-logout-button" onClick={handleLogout}>
 						<span className="member-logout-icon"><LogoutIcon /></span>
-						<span>Logout from Account</span>
+						<span>{t('userProfile.logout')}</span>
 					</button>
-					<p>Krishi Margadarshan App Version 2.4.0 (Stable)</p>
+					<p>{t('userProfile.version')}</p>
 				</section>
 			</main>
 
 			{isEditModalOpen ? (
 				<div className="member-edit-overlay" role="dialog" aria-modal="true" aria-labelledby="member-edit-title">
 					<form className="member-edit-card" onSubmit={handleEditSave}>
-						<h3 id="member-edit-title">Edit Profile Details</h3>
+						<h3 id="member-edit-title">{t('userProfile.editProfile')}</h3>
 						{editError ? <p className="member-edit-error">{editError}</p> : null}
 
 						<label htmlFor="edit-username">
-							Username
+							{t('userProfile.username')}
 							<input id="edit-username" name="username" type="text" value={editForm.username} onChange={handleEditInputChange} required />
 						</label>
 
 						<label htmlFor="edit-fullName">
-							Real Name
+							{t('userProfile.fullName')}
 							<input id="edit-fullName" name="fullName" type="text" value={editForm.fullName} onChange={handleEditInputChange} required />
 						</label>
 
 						<label htmlFor="edit-location">
-							Location
+							{t('userProfile.location')}
 							<input id="edit-location" name="location" type="text" value={editForm.location} onChange={handleEditInputChange} required />
 						</label>
 
 						<label htmlFor="edit-cropType">
-							Agriculture / Crops
+							{t('userProfile.cropType')}
 							<input id="edit-cropType" name="cropType" type="text" value={editForm.cropType} onChange={handleEditInputChange} required />
 						</label>
 
 						<label htmlFor="edit-phone">
-							Phone Number
+							{t('userProfile.phone')}
 							<input id="edit-phone" name="phone" type="tel" value={editForm.phone} onChange={handleEditInputChange} required />
 						</label>
 
 						<div className="member-edit-actions">
-							<button type="button" className="member-edit-cancel" onClick={() => setIsEditModalOpen(false)}>Cancel</button>
-							<button type="submit" className="member-edit-save">Save Changes</button>
+							<button type="button" className="member-edit-cancel" onClick={() => setIsEditModalOpen(false)}>{t('userProfile.cancel')}</button>
+							<button type="submit" className="member-edit-save">{t('userProfile.saveChanges')}</button>
 						</div>
 					</form>
 				</div>
@@ -321,15 +321,15 @@ function UserProfile() {
 				footerClassName="member-footer"
 				innerClassName="member-shell member-footer-inner"
 				linksClassName="member-footer-links"
-				brand="Krishi Margadarshan"
-				copy="© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP"
+				brand={t('common.brand')}
+				copy={t('common.footerCopy')}
 				brandClassName="member-footer-brand"
 				copyClassName="member-footer-copy"
 				links={[
-					{ to: '/advisory', label: 'Support Centers' },
-					{ to: '/articles', label: 'FAQ' },
-					{ to: '/advisory', label: 'Privacy' },
-					{ to: '/advisory', label: 'Contact' },
+					{ to: '/advisory', label: t('common.supportCenters') },
+					{ to: '/articles', label: t('common.faq') },
+					{ to: '/advisory', label: t('common.privacy') },
+					{ to: '/advisory', label: t('common.contact') },
 				]}
 			/>
 		</div>

@@ -11,9 +11,11 @@ import arrowIcon from '../assets/advisory/icon-arrow.svg'
 import supportPhoneIcon from '../assets/advisory/icon-support-phone.svg'
 import supportPinIcon from '../assets/advisory/icon-support-pin.svg'
 import { useLanguage } from '../context/LanguageContext'
+import { useTranslation } from 'react-i18next'
 
 function Advisory() {
 	const { isNepali } = useLanguage()
+	const { t } = useTranslation()
 	const [formState, setFormState] = useState({
 		fullName: '',
 		category: '',
@@ -23,123 +25,37 @@ function Advisory() {
 	const [submitError, setSubmitError] = useState('')
 	const [meta, setMeta] = useState(null)
 
-	const content = isNepali
-		? {
-			heroPill: 'विशेषज्ञ सल्लाह',
-			heroTitle1: 'कृषि विज्ञसँग',
-			heroTitle2: 'सिधै संवाद गर्नुहोस्',
-			heroBody:
-				'तपाईंका खेतीपाती सम्बन्धी जिज्ञासाहरू हाम्रा विज्ञहरूलाई सोध्नुहोस् र उचित समाधान प्राप्त गर्नुहोस्। हामी तपाईंको समृद्धिको साथी हौं।',
-			floatingTitle: '२४+ विज्ञहरू',
-			floatingBody: 'सहयोगका लागि तयार',
-			askTitle: 'विज्ञसँग सोध्नुहोस्',
-			askBody:
-				'हाम्रो टोलीमा बाली वैज्ञानिक, माटो विज्ञ र भेटेरिनरी डाक्टरहरू समावेश छन्। तपाईंको प्रश्न पठाउनुहोस्, हामी ३ कार्यदिन भित्र जवाफ दिनेछौं।',
-			benefits: [
-				{ title: 'नि:शुल्क परामर्श', detail: 'सबै साना किसानहरूको लागि पूर्ण रूपमा नि:शुल्क।' },
-				{ title: 'सही समाधान', detail: 'अनुभव र विज्ञानमा आधारित सल्लाह।' },
-			],
-			fullName: 'तपाईंको नाम',
-			fullNamePlaceholder: 'उदाहरण: राम बहादुर',
-			category: 'बालीको प्रकार',
-			categoryDefault: 'बालीनाली (Crops)',
-			question: 'प्रश्न',
-			questionPlaceholder: 'यहाँ आफ्नो समस्या लेख्नुहोस्...',
-			send: 'सन्देश पठाउनुहोस्',
-			faqTitle: 'बारम्बार सोधिने प्रश्नहरू',
-			faqs: [
-				{
-					title: 'बालीमा लाग्ने कीरा कसरी नियन्त्रण गर्ने?',
-					body: 'प्राङ्गारिक विषादीको प्रयोग गर्नुहोस् वा निमको झोल छर्कनुहोस्। कीरा धेरै लागेमा कृषि कार्यालयमा सम्पर्क गर्नुहोस्।',
-				},
-				{
-					title: 'माटो परीक्षण कहाँ गर्न सकिन्छ?',
-					body: 'तपाईंको नजिकको जिल्ला कृषि ज्ञान केन्द्रमा वा घुम्ती शिविरहरूमा माटोको नमुना बुझाउन सक्नुहुन्छ।',
-				},
-				{
-					title: 'उर्वर समयमा कुन मल प्रयोग गर्ने?',
-					body: 'बाली रोप्नु अघि गोठेमल र बाली बढ्ने बेलामा नाइट्रोजनयुक्त मलको प्रयोग गर्दा उत्पादन राम्रो हुन्छ।',
-				},
-				{
-					title: 'बीउ छनोट गर्दा के कुरामा ध्यान दिने?',
-					body: 'प्रमाणित बीउ मात्र प्रयोग गर्नुहोस्। बीउ खरिद गर्दा म्याद र शुद्धता प्रतिशत अनिवार्य जाँच गर्नुहोस्।',
-				},
-			],
-			supportTitle: 'कृषि सहयोग केन्द्रहरू',
-			supportSub: 'कृषि सहायता केन्द्र',
-			helpLine: 'आपतकालीन सहायता लाइन',
-			helpNumber: '1800-AGRI-HELP (फ्री नम्बर)',
-			office: 'केन्द्रीय कार्यालय',
-			officeAddress: 'हरिहरभवन, ललितपुर, नेपाल',
-			centers: [
-				{ title: 'बागमती प्रदेश केन्द्र', detail: 'हेटौँडा, फोन: ०५७-५२०१२३' },
-				{ title: 'गण्डकी प्रदेश केन्द्र', detail: 'पोखरा, फोन: ०६१-४६०४५६' },
-				{ title: 'कोशी प्रदेश केन्द्र', detail: 'विराटनगर, फोन: ०२१-५५०७८९' },
-				{ title: 'लुम्बिनी प्रदेश केन्द्र', detail: 'बुटवल, फोन: ०७१-५४०३२१' },
-			],
-			footerSupport: 'सहयोग केन्द्र',
-			footerFaq: 'प्रश्नोत्तर',
-			footerPrivacy: 'गोपनीयता',
-			footerContact: 'सम्पर्क',
-		}
-		: {
-			heroPill: 'Expert Advisory',
-			heroTitle1: 'Talk Directly with',
-			heroTitle2: 'Agriculture Experts',
-			heroBody:
-				'Ask our specialists about your farming challenges and receive practical recommendations for better yield and crop health.',
-			floatingTitle: '24+ Experts',
-			floatingBody: 'Ready to help',
-			askTitle: 'Ask a Specialist',
-			askBody:
-				'Our team includes crop scientists, soil experts, and veterinary specialists. Send your question and we will respond within 3 working days.',
-			benefits: [
-				{ title: 'Free Consultation', detail: 'Completely free support for smallholder farmers.' },
-				{ title: 'Accurate Solutions', detail: 'Recommendations based on science and field experience.' },
-			],
-			fullName: 'Full Name',
-			fullNamePlaceholder: 'Example: Ram Bahadur',
-			category: 'Category',
-			categoryDefault: 'Crops',
-			question: 'Your Question',
-			questionPlaceholder: 'Describe your farming issue here...',
-			send: 'Send Message',
-			faqTitle: 'Frequently Asked Questions',
-			faqs: [
-				{
-					title: 'How do I control crop pests naturally?',
-					body: 'Use organic pesticides or neem-based sprays. For severe infestations, contact your nearest agricultural support office.',
-				},
-				{
-					title: 'Where can I get soil testing done?',
-					body: 'You can submit soil samples at your district agriculture knowledge center or nearby mobile testing camps.',
-				},
-				{
-					title: 'Which fertilizer is best during planting?',
-					body: 'Apply compost before planting and nitrogen-rich fertilizers during crop growth for better productivity.',
-				},
-				{
-					title: 'What to check while selecting seeds?',
-					body: 'Use only certified seeds and always verify expiry date and purity percentage before purchase.',
-				},
-			],
-			supportTitle: 'Agricultural Support Centers',
-			supportSub: 'Regional guidance and emergency help',
-			helpLine: 'Emergency Help Line',
-			helpNumber: '1800-AGRI-HELP (Toll Free)',
-			office: 'Central Office',
-			officeAddress: 'Harihar Bhawan, Lalitpur, Nepal',
-			centers: [
-				{ title: 'Bagmati Province Center', detail: 'Hetauda, Phone: 057-520123' },
-				{ title: 'Gandaki Province Center', detail: 'Pokhara, Phone: 061-460456' },
-				{ title: 'Koshi Province Center', detail: 'Biratnagar, Phone: 021-550789' },
-				{ title: 'Lumbini Province Center', detail: 'Butwal, Phone: 071-540321' },
-			],
-			footerSupport: 'Support Centers',
-			footerFaq: 'FAQ',
-			footerPrivacy: 'Privacy',
-			footerContact: 'Contact',
-		}
+	const content = {
+		heroPill: t('advisory.heroPill'),
+		heroTitle1: t('advisory.heroTitle.0'),
+		heroTitle2: t('advisory.heroTitle.1'),
+		heroBody: t('advisory.heroBody'),
+		floatingTitle: t('advisory.floatingTitle'),
+		floatingBody: t('advisory.floatingBody'),
+		askTitle: t('advisory.askTitle'),
+		askBody: t('advisory.askBody'),
+		benefits: t('advisory.benefits', { returnObjects: true }),
+		fullName: t('advisory.fullName'),
+		fullNamePlaceholder: t('advisory.fullNamePlaceholder'),
+		category: t('advisory.category'),
+		categoryDefault: t('advisory.categoryDefault'),
+		question: t('advisory.question'),
+		questionPlaceholder: t('advisory.questionPlaceholder'),
+		send: t('advisory.send'),
+		faqTitle: t('advisory.faqTitle'),
+		faqs: t('advisory.faqs', { returnObjects: true }),
+		supportTitle: t('advisory.supportTitle'),
+		supportSub: t('advisory.supportSub'),
+		helpLine: t('advisory.helpLine'),
+		helpNumber: t('advisory.helpNumber'),
+		office: t('advisory.office'),
+		officeAddress: t('advisory.officeAddress'),
+		centers: t('advisory.centers', { returnObjects: true }),
+		footerSupport: t('advisory.footerSupport'),
+		footerFaq: t('advisory.footerFaq'),
+		footerPrivacy: t('advisory.footerPrivacy'),
+		footerContact: t('advisory.footerContact'),
+	}
 
 	const languageKey = isNepali ? 'ne' : 'en'
 
@@ -171,7 +87,7 @@ function Advisory() {
 		if (Array.isArray(list) && list.length > 0) {
 			return list
 		}
-		return [content.categoryDefault, isNepali ? 'माटो परीक्षण' : 'Soil Testing', isNepali ? 'पशुपालन' : 'Livestock']
+		return [content.categoryDefault, t('advisory.soilTesting'), t('advisory.livestock')]
 	}, [content.categoryDefault, isNepali, languageKey, meta])
 
 	const faqs = useMemo(() => {
@@ -360,8 +276,8 @@ function Advisory() {
 				footerClassName="advisory-footer"
 				innerClassName="advisory-shell advisory-footer-inner"
 				linksClassName="advisory-footer-links"
-				brand={isNepali ? 'कृषि मार्गदर्शन' : 'Krishi Margadarshan'}
-				copy={isNepali ? '© २०२४ कृषि मार्गदर्शन। सहायता: 1800-AGRI-HELP' : '© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP'}
+				brand={t('common.brand')}
+				copy={t('common.footerCopy')}
 				wrapBrandCopy
 				links={[
 					{ to: '/advisory', label: content.footerSupport },

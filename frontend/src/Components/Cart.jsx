@@ -3,36 +3,10 @@ import { Link } from 'react-router-dom'
 import './Cart.css'
 import NavBar from './NavBar'
 import { API_ENDPOINTS, apiRequest } from '../lib/api'
+import { useTranslation } from 'react-i18next'
 import productImage1 from '../assets/homepage/product-1.jpg'
 import productImage2 from '../assets/homepage/product-2.jpg'
 import productImage3 from '../assets/homepage/product-3.jpg'
-
-const fallbackCartItems = [
-	{
-		id: 'fallback-1',
-		name: 'Organic Rice Seeds',
-		variant: '25 kg certified pack',
-		price: 500,
-		quantity: 1,
-		image: productImage1,
-	},
-	{
-		id: 'fallback-2',
-		name: 'Precision Trowel',
-		variant: 'Stainless steel with bamboo grip',
-		price: 1250,
-		quantity: 1,
-		image: productImage2,
-	},
-	{
-		id: 'fallback-3',
-		name: 'Bio-Root Nutrient',
-		variant: 'Liquid soil booster - 1 litre',
-		price: 890,
-		quantity: 2,
-		image: productImage3,
-	},
-]
 
 const cartImages = [productImage1, productImage2, productImage3]
 
@@ -83,9 +57,45 @@ function TruckIcon() {
 }
 
 function Cart() {
+	const { t } = useTranslation()
+	const fallbackCartItems = useMemo(
+		() => [
+			{
+				id: 'fallback-1',
+				name: t('shop.fallbackProducts.0.name'),
+				variant: t('cart.fallbackItems.0.variant', { defaultValue: '25 kg certified pack' }),
+				price: 500,
+				quantity: 1,
+				image: productImage1,
+			},
+			{
+				id: 'fallback-2',
+				name: t('shop.fallbackProducts.1.name'),
+				variant: t('cart.fallbackItems.1.variant', { defaultValue: 'Stainless steel with bamboo grip' }),
+				price: 1250,
+				quantity: 1,
+				image: productImage2,
+			},
+			{
+				id: 'fallback-3',
+				name: t('shop.fallbackProducts.2.name'),
+				variant: t('cart.fallbackItems.2.variant', { defaultValue: 'Liquid soil booster - 1 litre' }),
+				price: 890,
+				quantity: 2,
+				image: productImage3,
+			},
+		],
+		[t]
+	)
 	const [cartItems, setCartItems] = useState(fallbackCartItems)
 	const [cartError, setCartError] = useState('')
 	const [isFallbackMode, setIsFallbackMode] = useState(true)
+
+	useEffect(() => {
+		if (isFallbackMode) {
+			setCartItems(fallbackCartItems)
+		}
+	}, [fallbackCartItems, isFallbackMode])
 
 	useEffect(() => {
 		let ignore = false
@@ -112,7 +122,7 @@ function Cart() {
 			} catch {
 				if (!ignore) {
 					setIsFallbackMode(true)
-					setCartError('Sign in to sync cart with backend. Showing sample cart items.')
+						setCartError(t('cart.fallbackError'))
 				}
 			}
 		}
@@ -172,13 +182,13 @@ function Cart() {
 				{cartError ? <p>{cartError}</p> : null}
 				<section className="cart-hero">
 					<div>
-						<span className="cart-kicker">Checkout Summary</span>
-						<h2>Your Cart</h2>
-						<p>Review your selected supplies before proceeding to checkout.</p>
+						<span className="cart-kicker">{t('cart.checkoutSummary')}</span>
+						<h2>{t('cart.yourCart')}</h2>
+						<p>{t('cart.review')}</p>
 					</div>
 					<div className="cart-hero-chip">
-						<span>{cartItems.length} Items</span>
-						<strong>Rs. {total.toLocaleString()}</strong>
+						<span>{t('cart.itemsLabel', { count: cartItems.length })}</span>
+						<strong>{t('cart.currencyPrefix')} {total.toLocaleString()}</strong>
 					</div>
 				</section>
 
@@ -186,13 +196,13 @@ function Cart() {
 					<div className="cart-items-panel">
 						<div className="cart-section-head">
 							<div>
-								<span className="cart-section-label">Selected Supplies</span>
-								<h3>Items ready for delivery</h3>
+								<span className="cart-section-label">{t('cart.selectedSupplies')}</span>
+								<h3>{t('cart.itemsReady')}</h3>
 							</div>
 						</div>
 
 						<div className="cart-item-list">
-							{cartItems.length === 0 ? <p>Your cart is empty.</p> : null}
+							{cartItems.length === 0 ? <p>{t('cart.emptyCart')}</p> : null}
 							{cartItems.map((item) => (
 								<article className="cart-item-card" key={item.name}>
 									<img src={item.image} alt={item.name} className="cart-item-image" />
@@ -202,20 +212,20 @@ function Cart() {
 												<h4>{item.name}</h4>
 												<p>{item.variant}</p>
 											</div>
-											<strong>Rs. {(item.price * item.quantity).toLocaleString()}</strong>
+											<strong>{t('cart.currencyPrefix')} {(item.price * item.quantity).toLocaleString()}</strong>
 										</div>
 										<div className="cart-item-controls">
 											<div className="cart-qty-control">
-												<button type="button" aria-label="Decrease quantity" onClick={() => syncQuantity(item.id, item.quantity - 1)}>
+												<button type="button" aria-label={t('cart.decreaseQuantity')} onClick={() => syncQuantity(item.id, item.quantity - 1)}>
 													<MinusIcon />
 												</button>
 												<span>{item.quantity}</span>
-												<button type="button" aria-label="Increase quantity" onClick={() => syncQuantity(item.id, item.quantity + 1)}>
+												<button type="button" aria-label={t('cart.increaseQuantity')} onClick={() => syncQuantity(item.id, item.quantity + 1)}>
 													<PlusIcon />
 												</button>
 											</div>
 											<button type="button" className="cart-remove-button" onClick={() => removeItem(item.id)}>
-												Remove
+												{t('cart.remove')}
 											</button>
 										</div>
 									</div>
@@ -227,27 +237,27 @@ function Cart() {
 					<aside className="cart-summary-panel">
 						<div className="cart-section-head">
 							<div>
-								<span className="cart-section-label">Payment Details</span>
-								<h3>Order Summary</h3>
+								<span className="cart-section-label">{t('cart.paymentDetails')}</span>
+								<h3>{t('cart.orderSummary')}</h3>
 							</div>
 						</div>
 
 						<div className="cart-summary-list">
 							<div>
-								<span>Subtotal</span>
-								<strong>Rs. {subtotal.toLocaleString()}</strong>
+								<span>{t('cart.subtotal')}</span>
+								<strong>{t('cart.currencyPrefix')} {subtotal.toLocaleString()}</strong>
 							</div>
 							<div>
-								<span>Delivery</span>
-								<strong>Rs. {deliveryFee.toLocaleString()}</strong>
+								<span>{t('cart.delivery')}</span>
+								<strong>{t('cart.currencyPrefix')} {deliveryFee.toLocaleString()}</strong>
 							</div>
 							<div>
-								<span>Service Fee</span>
-								<strong>Rs. {serviceFee.toLocaleString()}</strong>
+								<span>{t('cart.serviceFee')}</span>
+								<strong>{t('cart.currencyPrefix')} {serviceFee.toLocaleString()}</strong>
 							</div>
 							<div className="cart-summary-total">
-								<span>Total</span>
-								<strong>Rs. {total.toLocaleString()}</strong>
+								<span>{t('cart.total')}</span>
+								<strong>{t('cart.currencyPrefix')} {total.toLocaleString()}</strong>
 							</div>
 						</div>
 
@@ -255,24 +265,24 @@ function Cart() {
 							<div className="cart-badge-card">
 								<span className="cart-badge-icon"><ShieldIcon /></span>
 								<div>
-									<strong>Secure Checkout</strong>
-									<p>Your order details are protected.</p>
+									<strong>{t('cart.secureCheckout')}</strong>
+									<p>{t('cart.orderProtected')}</p>
 								</div>
 							</div>
 							<div className="cart-badge-card">
 								<span className="cart-badge-icon"><TruckIcon /></span>
 								<div>
-									<strong>Fast Dispatch</strong>
-									<p>Expected delivery within 2-4 days.</p>
+									<strong>{t('cart.fastDispatch')}</strong>
+									<p>{t('cart.deliveryWindow')}</p>
 								</div>
 							</div>
 						</div>
 
 						<button type="button" className="cart-checkout-button">
-							Proceed to Checkout
+							{t('cart.proceedToCheckout')}
 						</button>
 						<Link to="/shop" className="cart-secondary-button">
-							Continue Shopping
+							{t('cart.continueShopping')}
 						</Link>
 					</aside>
 				</section>

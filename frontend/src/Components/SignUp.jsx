@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import NavBar from './NavBar'
 import Footer from './Footer'
 import { useAuth } from '../context/AuthContext'
+import { useTranslation } from 'react-i18next'
 import './Auth.css'
 
 function SignUp() {
 	const navigate = useNavigate()
 	const { signUp, signUpWithProvider } = useAuth()
+	const { t } = useTranslation()
 	const [formData, setFormData] = useState({ name: '', email: '', password: '' })
 	const [feedback, setFeedback] = useState({ type: '', text: '' })
 
@@ -43,7 +45,7 @@ function SignUp() {
 			return
 		}
 
-		setTimeout(() => navigate('/login', { state: { message: 'Account ready. Please login.' } }), 700)
+		setTimeout(() => navigate('/login', { state: { message: t('auth.signup.accountReady') } }), 700)
 	}
 
 	return (
@@ -51,8 +53,8 @@ function SignUp() {
 			<NavBar />
 			<main className="auth-main">
 				<section className="auth-card" aria-labelledby="signup-title">
-					<h2 id="signup-title">Create Your Account</h2>
-					<p className="auth-subtitle">Sign up first, then login to access your profile page.</p>
+						<h2 id="signup-title">{t('auth.signup.title')}</h2>
+						<p className="auth-subtitle">{t('auth.signup.subtitle')}</p>
 
 					{feedback.text ? (
 						<div className={`auth-message ${feedback.type}`}>{feedback.text}</div>
@@ -60,36 +62,36 @@ function SignUp() {
 
 					<form className="auth-form" onSubmit={handleSubmit}>
 						<label htmlFor="name">
-							Full Name
+							{t('auth.signup.name')}
 							<input id="name" name="name" type="text" value={formData.name} onChange={handleChange} required />
 						</label>
 
 						<label htmlFor="email">
-							Email
+							{t('auth.signup.email')}
 							<input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
 						</label>
 
 						<label htmlFor="password">
-							Password
+							{t('auth.signup.password')}
 							<input id="password" name="password" type="password" minLength={6} value={formData.password} onChange={handleChange} required />
 						</label>
 
-						<button type="submit" className="auth-button primary">Sign Up</button>
+						<button type="submit" className="auth-button primary">{t('auth.signup.submit')}</button>
 					</form>
 
-					<div className="auth-divider">or continue with OAuth</div>
+					<div className="auth-divider">{t('auth.signup.oauthDivider')}</div>
 
 					<div className="auth-oauth-grid">
 						<button type="button" className="auth-button oauth" onClick={() => handleOAuthSignup('Google')}>
-							Sign up with Google
+							{t('auth.signup.google')}
 						</button>
 						<button type="button" className="auth-button oauth" onClick={() => handleOAuthSignup('GitHub')}>
-							Sign up with GitHub
+							{t('auth.signup.github')}
 						</button>
 					</div>
 
 					<p className="auth-switch-text">
-						Already signed up? <Link to="/login">Login here</Link>
+						{t('auth.signup.already')} <Link to="/login">{t('auth.signup.loginLink')}</Link>
 					</p>
 				</section>
 			</main>
@@ -98,15 +100,15 @@ function SignUp() {
 				footerClassName="member-footer"
 				innerClassName="member-shell member-footer-inner"
 				linksClassName="member-footer-links"
-				brand="Krishi Margadarshan"
-				copy="© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP"
+				brand={t('common.brand')}
+				copy={t('common.footerCopy')}
 				brandClassName="member-footer-brand"
 				copyClassName="member-footer-copy"
 				links={[
-					{ to: '/advisory', label: 'Support Centers' },
-					{ to: '/articles', label: 'FAQ' },
-					{ to: '/advisory', label: 'Privacy' },
-					{ to: '/advisory', label: 'Contact' },
+					{ to: '/advisory', label: t('common.supportCenters') },
+					{ to: '/articles', label: t('common.faq') },
+					{ to: '/advisory', label: t('common.privacy') },
+					{ to: '/advisory', label: t('common.contact') },
 				]}
 			/>
 		</div>

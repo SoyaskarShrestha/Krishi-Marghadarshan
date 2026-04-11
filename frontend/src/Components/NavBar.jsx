@@ -4,39 +4,31 @@ import languageIcon from '../assets/navbar/language.svg'
 import profileSimpleIcon from '../assets/navbar/profile-simple.svg'
 import searchIcon from '../assets/navbar/search.svg'
 import { useLanguage } from '../context/LanguageContext'
+import { useTranslation } from 'react-i18next'
 
 import './NavBar.css'
 
 function NavBar({
 	showSearch = false,
-	searchPlaceholder = 'Search...',
+	searchPlaceholder = '',
 	showLanguage = true,
 	showCart = false,
 	cartCount = 0,
 }) {
 	const { isNepali, toggleLanguage } = useLanguage()
+	const { t } = useTranslation()
+	const resolvedSearchPlaceholder = searchPlaceholder || t('navbar.searchPlaceholder')
 
-	const labels = isNepali
-		? {
-			brand: 'कृषि मार्गदर्शन',
-			home: 'गृहपृष्ठ',
-			weather: 'मौसम',
-			articles: 'लेख',
-			shop: 'पसल',
-			advisory: 'सल्लाह',
-			language: 'English',
-			profile: 'प्रोफाइल',
-		}
-		: {
-			brand: 'Krishi Margadarshan',
-			home: 'Home',
-			weather: 'Weather',
-			articles: 'Articles',
-			shop: 'Shop',
-			advisory: 'Advisory',
-			language: 'नेपाली',
-			profile: 'Profile',
-		}
+	const labels = {
+		brand: t('navbar.brand'),
+		home: t('navbar.navigation.home'),
+		weather: t('navbar.navigation.weather'),
+		articles: t('navbar.navigation.articles'),
+		shop: t('navbar.navigation.shop'),
+		advisory: t('navbar.navigation.advisory'),
+		language: isNepali ? t('navbar.language.en') : t('navbar.language.ne'),
+		profile: t('navbar.navigation.profile'),
+	}
 
 	return (
 		<header className="navbar">
@@ -46,11 +38,11 @@ function NavBar({
 						<h1 className="navbar-brand">{labels.brand}</h1>
 					</NavLink>
 					{showSearch ? (
-						<div className="navbar-search" role="search" aria-label="Search">
+						<div className="navbar-search" role="search" aria-label={t('navbar.searchAria')}>
 							<span className="navbar-search-icon">
 								<img src={searchIcon} alt="" aria-hidden="true" className="navbar-icon-image" />
 							</span>
-							<span>{searchPlaceholder}</span>
+							<span>{resolvedSearchPlaceholder}</span>
 						</div>
 					) : null}
 				</div>

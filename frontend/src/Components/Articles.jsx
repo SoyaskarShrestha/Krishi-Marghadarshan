@@ -4,6 +4,7 @@ import './Articles.css'
 import NavBar from './NavBar'
 import Footer from './Footer'
 import { API_ENDPOINTS, apiRequest } from '../lib/api'
+import { useTranslation } from 'react-i18next'
 import riceFieldsImage from '../assets/articles/rice-fields.jpg'
 import soilHealthImage from '../assets/articles/soil-health.jpg'
 import pestManagementImage from '../assets/articles/pest-management.jpg'
@@ -14,62 +15,33 @@ import arrowRightIcon from '../assets/articles/icons/arrow-right.svg'
 import bookmarkIcon from '../assets/articles/icons/bookmark.svg'
 import dropdownIcon from '../assets/articles/icons/dropdown.svg'
 
-const categoryTabs = [
-	{ label: 'All', value: '' },
-	{ label: 'Crop Guide', value: 'Crop Guide' },
-	{ label: 'Pest Control', value: 'Pest Control' },
-	{ label: 'Organic Methods', value: 'Organic Methods' },
-	{ label: 'Business', value: 'Business' },
-]
-
 const cardImages = [riceFieldsImage, soilHealthImage, pestManagementImage, marketGuideImage]
 
-const fallbackCards = [
-	{
-		featured: true,
-		image: riceFieldsImage,
-		badge: 'Featured',
-		publishedLabel: 'June 2024',
-		title: 'Growing Rice in the Terai',
-		titleNepali: 'तराईमा धान खेती',
-		category: 'Crop Guide',
-		description:
-			'A comprehensive guide on soil preparation, seed selection, and water management for high-yield rice farming in Nepal\'s southern plains.',
-		readTime: '6 min read',
-	},
-	{
-		featured: false,
-		image: soilHealthImage,
-		category: 'Organic Methods',
-		title: 'Natural Compost Secret',
-		description: 'Learn how to turn kitchen waste into nutrient-rich soil for your vegetable garden.',
-		readTime: '5 min read',
-	},
-	{
-		featured: false,
-		image: pestManagementImage,
-		category: 'Pest Control',
-		title: 'Seasonal Pest Guide',
-		description: 'Identifying common monsoon pests and using neem-based solutions for eco-friendly protection.',
-		readTime: '8 min read',
-	},
-	{
-		featured: false,
-		image: marketGuideImage,
-		category: 'Business',
-		title: 'Market Price Trends',
-		description: 'Understanding the best time to sell your produce in Kathmandu and major local markets.',
-		readTime: '12 min read',
-	},
-]
-
 function Articles() {
+	const { t } = useTranslation()
+	const categoryTabs = t('articles.categories', { returnObjects: true })
+	const fallbackCards = useMemo(
+		() =>
+			t('articles.featured', { returnObjects: true }).map((article, index) => ({
+				...article,
+				image: cardImages[index % cardImages.length],
+				badge: article.badge || (article.featured ? t('articles.featuredBadge') : ''),
+			})),
+		[t]
+	)
 	const [cards, setCards] = useState(fallbackCards)
+	const [isUsingFallbackCards, setIsUsingFallbackCards] = useState(true)
 	const [articlesError, setArticlesError] = useState('')
 	const [isLoading, setIsLoading] = useState(false)
 	const [searchTerm, setSearchTerm] = useState('')
 	const [activeCategory, setActiveCategory] = useState('')
 	const [language, setLanguage] = useState('all')
+
+	useEffect(() => {
+		if (isUsingFallbackCards) {
+			setCards(fallbackCards)
+		}
+	}, [fallbackCards, isUsingFallbackCards])
 
 	useEffect(() => {
 		let ignore = false
@@ -98,20 +70,21 @@ function Articles() {
 					id: article.id,
 					featured: Boolean(article.featured),
 					image: cardImages[index % cardImages.length],
-					badge: article.badge || (article.featured ? 'Featured' : ''),
-					publishedLabel: article.published_label || 'Latest',
+					badge: article.badge || (article.featured ? t('articles.featuredBadge') : ''),
+					publishedLabel: article.published_label || t('articles.latestLabel'),
 					title: article.title,
 					titleNepali: article.title_nepali || '',
 					category: article.category,
 					description: article.description,
-					readTime: article.read_time || '5 min read',
+									readTime: article.read_time || t('articles.defaultReadTime'),
 				}))
 
 				setCards(mapped)
+				setIsUsingFallbackCards(false)
 				setArticlesError('')
 			} catch (error) {
 				if (!ignore) {
-					setArticlesError(error.message || 'Showing sample articles because API is not reachable.')
+					setArticlesError(error.message || t('articles.loading'))
 				}
 			} finally {
 				if (!ignore) {
@@ -126,7 +99,7 @@ function Articles() {
 			ignore = true
 			window.clearTimeout(timer)
 		}
-	}, [searchTerm, activeCategory, language])
+	}, [searchTerm, activeCategory, language, t])
 
 	const featuredCard = useMemo(() => cards.find((card) => card.featured) || cards[0], [cards])
 	const miniCards = useMemo(() => cards.filter((card) => card !== featuredCard), [cards, featuredCard])
@@ -139,10 +112,10 @@ function Articles() {
 				<section className="articles-hero" data-node-id="2:814">
 					<div className="articles-hero-copy" data-node-id="2:815">
 						<h2>
-							<span>Agriculture</span>
-							<span>Learning Hub</span>
+							<span>{t('articles.heroTitle.0')}</span>
+							<span>{t('articles.heroTitle.1')}</span>
 						</h2>
-						<p>Expert farming techniques and local wisdom shared by the community to help your harvest thrive.</p>
+						<p>{t('articles.heroBody')}</p>
 					</div>
 
 					<div className="articles-search-wrap" data-node-id="2:820">
@@ -152,8 +125,8 @@ function Articles() {
 								type="search"
 								value={searchTerm}
 								onChange={(event) => setSearchTerm(event.target.value)}
-								placeholder="Search articles or crops..."
-								aria-label="Search articles"
+								placeholder={t('articles.searchPlaceholder')}
+								aria-label={t('articles.searchAria')}
 							/>
 						</div>
 					</div>
@@ -174,34 +147,34 @@ function Articles() {
 					</div>
 
 					<div className="articles-filter-wrap" data-node-id="2:834">
-						<span className="articles-filter-label">Filter By</span>
+						<span className="articles-filter-label">{t('articles.filterLabel')}</span>
 						<button type="button" className="articles-language-select" aria-hidden="true" tabIndex={-1}>
-							<span>Language</span>
+							<span>{t('articles.languageLabel')}</span>
 							<img src={dropdownIcon} alt="" aria-hidden="true" />
 						</button>
 						<select
 							className="articles-language-dropdown"
 							value={language}
 							onChange={(event) => setLanguage(event.target.value)}
-							aria-label="Filter language"
+							aria-label={t('articles.languageLabel')}
 						>
-							<option value="all">All Languages</option>
-							<option value="en">English</option>
-							<option value="ne">Nepali</option>
+							<option value="all">{t('articles.allLanguages')}</option>
+							<option value="en">{t('articles.english')}</option>
+							<option value="ne">{t('articles.nepali')}</option>
 						</select>
 					</div>
 				</section>
 
 				{articlesError ? <p className="articles-shell">{articlesError}</p> : null}
-				{isLoading ? <p className="articles-shell">Loading articles...</p> : null}
-				{!isLoading && cards.length === 0 ? <p className="articles-shell">No articles found for the selected filters.</p> : null}
+				{isLoading ? <p className="articles-shell">{t('articles.loading')}</p> : null}
+				{!isLoading && cards.length === 0 ? <p className="articles-shell">{t('articles.emptyState')}</p> : null}
 
 				<section className="articles-grid" data-node-id="2:843">
 					{featuredCard ? (
 						<article className="articles-featured-card" data-node-id="2:844">
 							<div className="articles-featured-image-wrap">
 								<img src={featuredCard.image} alt={featuredCard.title} />
-								<span className="articles-pill">{featuredCard.badge || 'Featured'}</span>
+								<span className="articles-pill">{featuredCard.badge || t('articles.featuredBadge')}</span>
 							</div>
 							<div className="articles-featured-copy">
 								<div className="articles-date-row">
@@ -214,7 +187,7 @@ function Articles() {
 								</h3>
 								<p>{featuredCard.description}</p>
 								<Link to="/articles" className="articles-read-link">
-									<span>Read Full Article</span>
+									<span>{t('articles.readFullArticle')}</span>
 									<img src={arrowRightIcon} alt="" aria-hidden="true" />
 								</Link>
 							</div>
@@ -230,7 +203,7 @@ function Articles() {
 								<p>{card.description}</p>
 								<div className="articles-card-footer">
 									<span>{card.readTime}</span>
-									<button type="button" className="articles-bookmark-btn" aria-label="Bookmark article">
+									<button type="button" className="articles-bookmark-btn" aria-label={t('articles.bookmarkAria')}>
 										<img src={bookmarkIcon} alt="" aria-hidden="true" />
 									</button>
 								</div>
@@ -241,7 +214,7 @@ function Articles() {
 
 				<div className="articles-cta-wrap" data-node-id="2:917">
 					<Link to="/articles" className="articles-cta-button">
-						Explore More Articles
+							{t('articles.cta')}
 					</Link>
 				</div>
 			</main>
@@ -250,14 +223,14 @@ function Articles() {
 				footerClassName="articles-footer"
 				innerClassName="articles-shell articles-footer-inner"
 				linksClassName="articles-footer-links"
-				brand="Krishi Margadarshan"
-				copy="© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP"
+				brand={t('common.brand')}
+				copy={t('common.footerCopy')}
 				footerProps={{ 'data-node-id': '2:919' }}
 				links={[
-					{ to: '/advisory', label: 'Support Centers' },
-					{ to: '/articles', label: 'FAQ' },
-					{ to: '/advisory', label: 'Privacy' },
-					{ to: '/advisory', label: 'Contact' },
+					{ to: '/advisory', label: t('common.supportCenters') },
+					{ to: '/articles', label: t('common.faq') },
+					{ to: '/advisory', label: t('common.privacy') },
+					{ to: '/advisory', label: t('common.contact') },
 				]}
 			/>
 		</div>

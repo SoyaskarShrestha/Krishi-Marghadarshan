@@ -3,12 +3,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import NavBar from './NavBar'
 import Footer from './Footer'
 import { useAuth } from '../context/AuthContext'
+import { useTranslation } from 'react-i18next'
 import './Auth.css'
 
 function CompleteProfile() {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { updateProfile } = useAuth()
+	const { t } = useTranslation()
 	const signupEmail = location.state?.email || ''
 	const [formData, setFormData] = useState({
 		email: signupEmail,
@@ -45,10 +47,8 @@ function CompleteProfile() {
 			<NavBar />
 			<main className="auth-main">
 				<section className="auth-card" aria-labelledby="complete-profile-title">
-					<h2 id="complete-profile-title">Complete Your Profile</h2>
-					<p className="auth-subtitle">
-						Add details that will appear on your profile page.
-					</p>
+						<h2 id="complete-profile-title">{t('auth.completeProfile.title')}</h2>
+						<p className="auth-subtitle">{t('auth.completeProfile.subtitle')}</p>
 
 					{feedback.text ? (
 						<div className={`auth-message ${feedback.type}`}>{feedback.text}</div>
@@ -56,40 +56,40 @@ function CompleteProfile() {
 
 					<form className="auth-form" onSubmit={handleSubmit}>
 						<label htmlFor="email">
-							Account Email
+							{t('auth.completeProfile.email')}
 							<input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
 						</label>
 
 						<label htmlFor="username">
-							Username
+							{t('auth.completeProfile.username')}
 							<input id="username" name="username" type="text" value={formData.username} onChange={handleChange} required />
 						</label>
 
 						<label htmlFor="fullName">
-							Real Name
+							{t('auth.completeProfile.fullName')}
 							<input id="fullName" name="fullName" type="text" value={formData.fullName} onChange={handleChange} required />
 						</label>
 
 						<label htmlFor="location">
-							Location
+							{t('auth.completeProfile.location')}
 							<input id="location" name="location" type="text" value={formData.location} onChange={handleChange} required />
 						</label>
 
 						<label htmlFor="cropType">
-							Agriculture / Crops You Grow
+							{t('auth.completeProfile.cropType')}
 							<input id="cropType" name="cropType" type="text" value={formData.cropType} onChange={handleChange} required />
 						</label>
 
 						<label htmlFor="phone">
-							Phone Number
+							{t('auth.completeProfile.phone')}
 							<input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} required />
 						</label>
 
-						<button type="submit" className="auth-button primary">Save and Continue to Login</button>
+						<button type="submit" className="auth-button primary">{t('auth.completeProfile.submit')}</button>
 					</form>
 
 					<p className="auth-switch-text">
-						Already completed? <Link to="/login">Go to login</Link>
+						{t('auth.completeProfile.back')} <Link to="/login">{t('auth.completeProfile.loginLink')}</Link>
 					</p>
 				</section>
 			</main>
@@ -98,15 +98,15 @@ function CompleteProfile() {
 				footerClassName="member-footer"
 				innerClassName="member-shell member-footer-inner"
 				linksClassName="member-footer-links"
-				brand="Krishi Margadarshan"
-				copy="© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP"
+				brand={t('common.brand')}
+				copy={t('common.footerCopy')}
 				brandClassName="member-footer-brand"
 				copyClassName="member-footer-copy"
 				links={[
-					{ to: '/advisory', label: 'Support Centers' },
-					{ to: '/articles', label: 'FAQ' },
-					{ to: '/advisory', label: 'Privacy' },
-					{ to: '/advisory', label: 'Contact' },
+					{ to: '/advisory', label: t('common.supportCenters') },
+					{ to: '/articles', label: t('common.faq') },
+					{ to: '/advisory', label: t('common.privacy') },
+					{ to: '/advisory', label: t('common.contact') },
 				]}
 			/>
 		</div>

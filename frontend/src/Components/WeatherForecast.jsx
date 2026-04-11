@@ -3,6 +3,7 @@ import './WeatherForecast.css'
 import NavBar from './NavBar'
 import Footer from './Footer'
 import { API_ENDPOINTS, apiRequest } from '../lib/api'
+import { useTranslation } from 'react-i18next'
 import autoDetectIcon from '../assets/weather/icons/auto-detect.svg'
 import cloudIcon from '../assets/weather/icons/cloud.svg'
 import dayCloudyIcon from '../assets/weather/icons/day-cloudy.svg'
@@ -14,33 +15,6 @@ import heroImage from '../assets/weather/hero-figma.jpg'
 import humidityBadgeIcon from '../assets/weather/icons/humidity-badge.svg'
 import locationIcon from '../assets/weather/icons/location.svg'
 import rainBadgeIcon from '../assets/weather/icons/rain-badge.svg'
-
-const sideStats = [
-	{
-		label: 'OPTIMAL',
-		value: '64%',
-		title: 'Humidity',
-		icon: humidityBadgeIcon,
-		kind: 'humidity',
-	},
-	{
-		label: 'MODERATE',
-		value: '12mm',
-		title: 'Expected Rainfall',
-		icon: rainBadgeIcon,
-		kind: 'rainfall',
-	},
-]
-
-const weeklyForecast = [
-	{ day: 'TODAY', high: '24°', low: '18°', condition: 'SUNNY', tone: 'sunny-chip', icon: daySunnyIcon },
-	{ day: 'MON', high: '22°', low: '16°', condition: 'CLOUDY', tone: 'neutral', icon: dayCloudyIcon },
-	{ day: 'TUE', high: '19°', low: '15°', condition: 'RAINY', tone: 'rainy', icon: dayRainyIcon },
-	{ day: 'WED', high: '21°', low: '16°', condition: 'PARTLY', tone: 'neutral', icon: dayPartlyIcon },
-	{ day: 'THU', high: '25°', low: '19°', condition: 'SUNNY', tone: 'neutral', icon: daySunnyIcon },
-	{ day: 'FRI', high: '26°', low: '20°', condition: 'SUNNY', tone: 'neutral', icon: daySunnyIcon },
-	{ day: 'SAT', high: '24°', low: '18°', condition: 'PARTLY', tone: 'neutral', icon: dayPartlyIcon },
-]
 
 const weatherIcons = {
 	SUNNY: daySunnyIcon,
@@ -55,23 +29,66 @@ const statIconByKind = {
 }
 
 function WeatherForecast() {
+	const { t } = useTranslation()
 	const [location, setLocation] = useState('Pokhara')
-	const [weatherData, setWeatherData] = useState({
-		current: {
-			temperature_c: 22,
-			summary: 'Partly Cloudy',
-			timestamp: '10:45 AM',
-			sky_label: 'SCATTERED CLOUDS',
-		},
-		stats: sideStats,
-		weekly: weeklyForecast,
-		guide: {
-			title: 'Smart Agriculture Guide',
-			body: 'Based on current weather, this is an excellent week for planting rice in the Pokhara valley. Moderate humidity and scattered showers will reduce the need for artificial irrigation.',
-			tags: ['Planting Season', 'Low Irrigation Need', 'Favorable Winds'],
-		},
-	})
+	const sideStats = useMemo(
+		() => [
+			{
+						label: t('weather.optimal'),
+				value: '64%',
+				title: t('weather.humidity'),
+				icon: humidityBadgeIcon,
+				kind: 'humidity',
+			},
+			{
+						label: t('weather.moderate'),
+				value: '12mm',
+				title: t('weather.expectedRainfall'),
+				icon: rainBadgeIcon,
+				kind: 'rainfall',
+			},
+		],
+		[t]
+	)
+	const weeklyForecast = useMemo(
+		() => [
+			{ day: t('weather.today'), high: '24°', low: '18°', condition: t('weather.conditionSunny'), tone: 'sunny-chip', icon: daySunnyIcon },
+			{ day: t('weather.mon'), high: '22°', low: '16°', condition: t('weather.conditionCloudy'), tone: 'neutral', icon: dayCloudyIcon },
+			{ day: t('weather.tue'), high: '19°', low: '15°', condition: t('weather.conditionRainy'), tone: 'rainy', icon: dayRainyIcon },
+			{ day: t('weather.wed'), high: '21°', low: '16°', condition: t('weather.conditionPartly'), tone: 'neutral', icon: dayPartlyIcon },
+			{ day: t('weather.thu'), high: '25°', low: '19°', condition: t('weather.conditionSunny'), tone: 'neutral', icon: daySunnyIcon },
+			{ day: t('weather.fri'), high: '26°', low: '20°', condition: t('weather.conditionSunny'), tone: 'neutral', icon: daySunnyIcon },
+			{ day: t('weather.sat'), high: '24°', low: '18°', condition: t('weather.conditionPartly'), tone: 'neutral', icon: dayPartlyIcon },
+		],
+		[t]
+	)
+	const fallbackWeatherData = useMemo(
+		() => ({
+			current: {
+				temperature_c: 22,
+				summary: t('weather.weatherSummary'),
+				timestamp: t('weather.weatherTimestamp'),
+				sky_label: t('weather.weatherSky'),
+			},
+			stats: sideStats,
+			weekly: weeklyForecast,
+			guide: {
+				title: t('weather.weatherGuideTitle'),
+				body: t('weather.weatherGuideBody'),
+				tags: t('weather.weatherGuideTags', { returnObjects: true }),
+			},
+		}),
+		[t, sideStats, weeklyForecast]
+	)
+	const [weatherData, setWeatherData] = useState(fallbackWeatherData)
+	const [isUsingFallbackWeather, setIsUsingFallbackWeather] = useState(true)
 	const [weatherError, setWeatherError] = useState('')
+
+	useEffect(() => {
+		if (isUsingFallbackWeather) {
+			setWeatherData(fallbackWeatherData)
+		}
+	}, [fallbackWeatherData, isUsingFallbackWeather])
 
 	const requestForecast = async (targetLocation) => {
 		try {
@@ -84,9 +101,10 @@ function WeatherForecast() {
 					icon: statIconByKind[item.kind] || humidityBadgeIcon,
 				})),
 			}))
+			setIsUsingFallbackWeather(false)
 			setWeatherError('')
 		} catch (error) {
-			setWeatherError(error.message || 'Showing fallback forecast because weather API is unavailable.')
+			setWeatherError(error.message || t('weather.fallbackError'))
 		}
 	}
 
@@ -104,11 +122,12 @@ function WeatherForecast() {
 							icon: statIconByKind[item.kind] || humidityBadgeIcon,
 						})),
 					}))
+					setIsUsingFallbackWeather(false)
 					setWeatherError('')
 				}
 			} catch (error) {
 				if (!ignore) {
-					setWeatherError(error.message || 'Showing fallback forecast because weather API is unavailable.')
+					setWeatherError(error.message || t('weather.fallbackError'))
 				}
 			}
 		}, 500)
@@ -117,7 +136,7 @@ function WeatherForecast() {
 			ignore = true
 			window.clearTimeout(timer)
 		}
-	}, [location])
+	}, [location, t])
 
 	const weeklyWithIcons = useMemo(
 		() => (weatherData.weekly || weeklyForecast).map((item) => ({ ...item, icon: weatherIcons[item.condition] || dayPartlyIcon })),
@@ -132,8 +151,8 @@ function WeatherForecast() {
 				{weatherError ? <p>{weatherError}</p> : null}
 				<section className="weather-topbar" data-node-id="2:4">
 					<div>
-						<h2>Weather Forecast</h2>
-						<p>Monitoring your local climate conditions in {location}</p>
+						<h2>{t('weather.title')}</h2>
+						<p>{t('weather.description', { location })}</p>
 					</div>
 					<div className="weather-location-controls">
 						<label className="weather-location-input" htmlFor="weather-location">
@@ -142,12 +161,12 @@ function WeatherForecast() {
 								id="weather-location"
 								value={location}
 								onChange={(event) => setLocation(event.target.value)}
-								placeholder="Enter village or district..."
+								placeholder={t('weather.locationPlaceholder')}
 							/>
 						</label>
 						<button type="button" className="weather-detect-btn" onClick={() => requestForecast(location)}>
 							<img src={autoDetectIcon} alt="" aria-hidden="true" />
-							<span>Refresh</span>
+							<span>{t('weather.refresh')}</span>
 						</button>
 					</div>
 				</section>
@@ -157,7 +176,7 @@ function WeatherForecast() {
 						<img src={heroImage} alt="Rice field in Pokhara" className="weather-main-image" />
 						<div className="weather-main-overlay" />
 						<div className="weather-main-content">
-							<span className="weather-live-pill">RIGHT NOW</span>
+							<span className="weather-live-pill">{t('weather.rightNow')}</span>
 							<div className="weather-temp-row">
 								<strong>{weatherData.current.temperature_c}</strong>
 								<span>°C</span>
@@ -201,9 +220,9 @@ function WeatherForecast() {
 
 				<section className="weather-forecast" data-node-id="2:70">
 					<div className="weather-forecast-head">
-						<h3>7-Day Forecast</h3>
+							<h3>{t('weather.forecast7Day')}</h3>
 						<div className="weather-forecast-divider" />
-						<button type="button">Download Report</button>
+							<button type="button">{t('weather.downloadReport')}</button>
 					</div>
 					<div className="weather-forecast-cards">
 						{weeklyWithIcons.map((day) => (
@@ -225,7 +244,7 @@ function WeatherForecast() {
 						<img src={guideImage} alt="Farmer in field" className="weather-guide-image" />
 					</div>
 					<div className="weather-guide-copy">
-						<h3>{weatherData.guide?.title || 'Smart Agriculture Guide'}</h3>
+						<h3>{weatherData.guide?.title || t('weather.weatherGuideTitle')}</h3>
 						<p>{weatherData.guide?.body}</p>
 						<div className="weather-guide-tags">
 							{(weatherData.guide?.tags || []).map((tag) => (
@@ -240,13 +259,13 @@ function WeatherForecast() {
 				footerClassName="weather-footer"
 				innerClassName="weather-shell weather-footer-inner"
 				linksClassName="weather-footer-links"
-				brand="Krishi Margadarshan"
-				copy="© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP"
+				brand={t('common.brand')}
+				copy={t('common.footerCopy')}
 				links={[
-					{ to: '/advisory', label: 'Support Centers' },
-					{ to: '/articles', label: 'FAQ' },
-					{ to: '/advisory', label: 'Privacy' },
-					{ to: '/advisory', label: 'Contact' },
+					{ to: '/advisory', label: t('common.supportCenters') },
+					{ to: '/articles', label: t('common.faq') },
+					{ to: '/advisory', label: t('common.privacy') },
+					{ to: '/advisory', label: t('common.contact') },
 				]}
 			/>
 		</div>

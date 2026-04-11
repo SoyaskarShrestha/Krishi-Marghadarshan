@@ -4,6 +4,7 @@ import './Shop.css'
 import NavBar from './NavBar'
 import Footer from './Footer'
 import { API_ENDPOINTS, apiRequest } from '../lib/api'
+import { useTranslation } from 'react-i18next'
 import heroImage from '../assets/shop/hero.png'
 import exploreArrowIcon from '../assets/shop/icons/explore-arrow.svg'
 import adviceGearIcon from '../assets/shop/icons/advice-gear.svg'
@@ -19,78 +20,41 @@ import productImage4 from '../assets/shop/product-4.jpg'
 import productImage5 from '../assets/shop/product-5.jpg'
 import productImage6 from '../assets/shop/product-6.jpg'
 
-const baseCategories = [
-	{ label: 'All Products', checked: true },
-	{ label: 'Organic Seeds', checked: false },
-	{ label: 'Bio Fertilizers', checked: false },
-	{ label: 'Modern Tools', checked: false },
-]
-
 const productImages = [productImage1, productImage2, productImage3, productImage4, productImage5, productImage6]
 
-const fallbackProducts = [
-	{
-		name: 'Organic Rice Seeds',
-		category: 'Organic Seeds',
-		price: '500',
-		description: 'High-yield basmati variety optimized for Himalayan mid-hill…',
-		image: productImage1,
-		badge: 'Organic Certified',
-		badgeTone: 'light',
-	},
-	{
-		name: 'Precision Trowel',
-		category: 'Modern Tools',
-		price: '1,250',
-		description: 'Rust-resistant stainless steel with bamboo ergonomic handle for…',
-		image: productImage2,
-		badge: 'Best Seller',
-		badgeTone: 'brown',
-	},
-	{
-		name: 'Bio-Root Nutrient',
-		category: 'Bio Fertilizers',
-		price: '890',
-		description: 'Enriched with mycorrhiza for explosive root growth and soil…',
-		image: productImage3,
-		badge: '',
-		badgeTone: 'light',
-	},
-	{
-		name: 'Heirloom Tomato',
-		category: 'Organic Seeds',
-		price: '350',
-		description: 'Non-GMO seeds for sweet, fleshy Himalayan varieties. 50 seeds.',
-		image: productImage4,
-		badge: '',
-		badgeTone: 'light',
-	},
-	{
-		name: 'Heavy-Duty Spade',
-		category: 'Modern Tools',
-		price: '2,400',
-		description: 'Forged steel blade for breaking tough mountain soil. Lifetime…',
-		image: productImage5,
-		badge: '',
-		badgeTone: 'light',
-	},
-	{
-		name: 'Vermicompost Gold',
-		category: 'Bio Fertilizers',
-		price: '450',
-		description: 'Pure organic worm castings for rich soil aeration and nutrition.…',
-		image: productImage6,
-		badge: '',
-		badgeTone: 'light',
-	},
-]
-
 function Shop() {
+	const { t } = useTranslation()
+	const baseCategories = useMemo(
+		() => [
+			{ value: 'all', label: t('shop.allProducts'), checked: true },
+			{ value: 'Organic Seeds', label: t('shop.organicSeeds'), checked: false },
+			{ value: 'Bio Fertilizers', label: t('shop.bioFertilizers'), checked: false },
+			{ value: 'Modern Tools', label: t('shop.modernTools'), checked: false },
+		],
+		[t]
+	)
+	const fallbackProducts = useMemo(
+		() =>
+			t('shop.fallbackProducts', { returnObjects: true }).map((product, index) => ({
+				...product,
+				image: productImages[index % productImages.length],
+			})),
+		[t]
+	)
+	const categoryLabels = useMemo(
+		() => ({
+			'Organic Seeds': t('shop.organicSeeds'),
+			'Bio Fertilizers': t('shop.bioFertilizers'),
+			'Modern Tools': t('shop.modernTools'),
+		}),
+		[t]
+	)
 	const [products, setProducts] = useState(fallbackProducts)
+	const [isUsingFallbackProducts, setIsUsingFallbackProducts] = useState(true)
 	const [shopError, setShopError] = useState('')
 	const [actionMessage, setActionMessage] = useState('')
 	const [selectedCategories, setSelectedCategories] = useState(() =>
-		baseCategories.filter((category) => category.checked).map((category) => category.label)
+		baseCategories.filter((category) => category.checked).map((category) => category.value)
 	)
 
 	useEffect(() => {
@@ -117,10 +81,11 @@ function Shop() {
 				if (mapped.length > 0) {
 					setProducts(mapped)
 				}
+				setIsUsingFallbackProducts(false)
 				setShopError('')
 			} catch {
 				if (!ignore) {
-					setShopError('Showing sample products because API is not reachable.')
+					setShopError(t('shop.fallbackError'))
 				}
 			}
 		}
@@ -130,38 +95,40 @@ function Shop() {
 		return () => {
 			ignore = true
 		}
-	}, [])
+		}, [t])
 
 	const categories = useMemo(() => {
 		const fromProducts = Array.from(new Set(products.map((product) => product.category).filter(Boolean))).map((label) => ({
-			label,
+			value: label,
+			label: categoryLabels[label] || label,
 			checked: false,
 		}))
 
-		return [{ label: 'All Products', checked: true }, ...fromProducts]
-	}, [products])
+		return [baseCategories[0], ...fromProducts]
+	}, [baseCategories, categoryLabels, products])
 
+	const displayProducts = isUsingFallbackProducts ? fallbackProducts : products
 	const visibleProducts = useMemo(() => {
-		if (selectedCategories.includes('All Products') || selectedCategories.length === 0) {
-			return products
+		if (selectedCategories.includes('all') || selectedCategories.length === 0) {
+			return displayProducts
 		}
 
-		return products.filter((product) => selectedCategories.includes(product.category))
-	}, [products, selectedCategories])
+		return displayProducts.filter((product) => selectedCategories.includes(product.category))
+	}, [displayProducts, selectedCategories])
 
-	const handleCategoryChange = (label) => {
+	const handleCategoryChange = (value) => {
 		setSelectedCategories((current) =>
-			label === 'All Products'
-				? ['All Products']
-				: current.includes(label)
-					? current.filter((item) => item !== label && item !== 'All Products')
-					: [...current.filter((item) => item !== 'All Products'), label]
+			value === 'all'
+				? ['all']
+				: current.includes(value)
+					? current.filter((item) => item !== value && item !== 'all')
+					: [...current.filter((item) => item !== 'all'), value]
 		)
 	}
 
 	const handleAddToCart = async (product) => {
 		if (!product.id) {
-			setActionMessage('Sample item cannot be synced to cart.')
+			setActionMessage(t('shop.sampleOnly'))
 			return
 		}
 
@@ -170,7 +137,7 @@ function Shop() {
 				method: 'POST',
 				body: JSON.stringify({ product_id: product.id, quantity: 1 }),
 			})
-			setActionMessage(`${product.name} added to cart.`)
+			setActionMessage(t('shop.addedToCart', { name: product.name }))
 		} catch (error) {
 			setActionMessage(error.message)
 		}
@@ -186,14 +153,14 @@ function Shop() {
 						<img src={heroImage} alt="Terraced green field landscape" className="shop-hero-image" />
 						<div className="shop-hero-overlay" />
 						<div className="shop-hero-content">
-							<span className="shop-pill">New Season Arrival</span>
+							<span className="shop-pill">{t('shop.heroBadge')}</span>
 							<h2>
-								<span>Premium Organic</span>
-								<span>Seeds for</span>
-								<span>Nepal&apos;s Soil.</span>
+								<span>{t('shop.heroTitle.0')}</span>
+								<span>{t('shop.heroTitle.1')}</span>
+								<span>{t('shop.heroTitle.2')}</span>
 							</h2>
 							<Link to="/shop" className="shop-hero-cta">
-								<span>Explore Collection</span>
+								<span>{t('shop.heroCta')}</span>
 								<img src={exploreArrowIcon} alt="" aria-hidden="true" />
 							</Link>
 						</div>
@@ -202,16 +169,16 @@ function Shop() {
 					<div className="shop-side-cards" data-node-id="2:229">
 						<article className="shop-side-card advice" data-node-id="2:230">
 							<div className="shop-side-card-copy">
-								<h3>Expert Advice</h3>
-								<p>Consult with agronomists for your specific crop needs.</p>
+								<h3>{t('shop.expertAdviceTitle')}</h3>
+								<p>{t('shop.expertAdviceBody')}</p>
 							</div>
 							<img src={adviceGearIcon} alt="" aria-hidden="true" className="shop-side-card-decor" />
 						</article>
 
 						<article className="shop-side-card delivery" data-node-id="2:242">
 							<div className="shop-side-card-copy">
-								<h3>Fast Delivery</h3>
-								<p>To all 77 districts across Nepal.</p>
+								<h3>{t('shop.fastDeliveryTitle')}</h3>
+								<p>{t('shop.fastDeliveryBody')}</p>
 								<div className="shop-side-icons">
 									<img src={truckIcon} alt="" aria-hidden="true" />
 									<img src={pinIcon} alt="" aria-hidden="true" />
@@ -224,18 +191,18 @@ function Shop() {
 				<section className="shop-catalog" data-node-id="2:249">
 					<aside className="shop-sidebar" data-node-id="2:250">
 						<div className="shop-sidebar-group">
-							<h3>Categories</h3>
+							<h3>{t('shop.categoriesTitle')}</h3>
 							<div className="shop-filter-list">
 								{categories.map((category) => (
-									<label className="shop-filter-item" key={category.label}>
+									<label className="shop-filter-item" key={category.value}>
 										<input
 											type="checkbox"
-											checked={selectedCategories.includes(category.label)}
-											onChange={() => handleCategoryChange(category.label)}
+											checked={selectedCategories.includes(category.value)}
+											onChange={() => handleCategoryChange(category.value)}
 											className="shop-filter-input"
 										/>
-										<span className={`shop-filter-box ${selectedCategories.includes(category.label) ? 'checked' : ''}`}>
-											{selectedCategories.includes(category.label) ? <img src={checkIcon} alt="" aria-hidden="true" /> : null}
+										<span className={`shop-filter-box ${selectedCategories.includes(category.value) ? 'checked' : ''}`}>
+											{selectedCategories.includes(category.value) ? <img src={checkIcon} alt="" aria-hidden="true" /> : null}
 										</span>
 										<span>{category.label}</span>
 									</label>
@@ -244,7 +211,7 @@ function Shop() {
 						</div>
 
 						<div className="shop-price-card">
-							<h3>Price Range</h3>
+							<h3>{t('shop.priceRangeTitle')}</h3>
 							<div className="shop-price-bar">
 								<span />
 							</div>
@@ -255,25 +222,25 @@ function Shop() {
 						</div>
 
 						<div className="shop-support-card">
-							<h4>Need Support?</h4>
-							<p>Our agricultural experts are available for live consultation.</p>
-							<button type="button">Call 1800-AGRI</button>
+							<h4>{t('shop.needSupport')}</h4>
+							<p>{t('shop.supportBody')}</p>
+							<button type="button">{t('shop.callButton')}</button>
 						</div>
 					</aside>
 
 					<div className="shop-content" data-node-id="2:298">
 						<div className="shop-content-head" data-node-id="2:299">
 							<div className="shop-content-title">
-								<h3>Available Supplies</h3>
-								<p>Showing {visibleProducts.length} verified organic products</p>
+								<h3>{t('shop.availableSupplies')}</h3>
+								<p>{t('shop.subtitle', { count: visibleProducts.length })}</p>
 								{shopError ? <p>{shopError}</p> : null}
 								{actionMessage ? <p>{actionMessage}</p> : null}
 							</div>
 
 							<div className="shop-sort">
-								<span className="shop-sort-label">SORT BY:</span>
+								<span className="shop-sort-label">{t('shop.sortBy')}</span>
 								<button type="button" className="shop-sort-select">
-									<span>Popularity</span>
+									<span>{t('shop.popularity')}</span>
 									<img src={sortIcon} alt="" aria-hidden="true" />
 								</button>
 							</div>
@@ -295,7 +262,7 @@ function Shop() {
 										<p>{product.description}</p>
 										<button type="button" className="shop-add-button" onClick={() => handleAddToCart(product)}>
 											<img src={cartIcon} alt="" aria-hidden="true" />
-											<span>Add to Cart</span>
+											<span>{t('shop.addToCart')}</span>
 										</button>
 									</div>
 								</article>
@@ -309,17 +276,17 @@ function Shop() {
 				footerClassName="shop-footer"
 				innerClassName="shop-shell shop-footer-inner"
 				linksClassName="shop-footer-links"
-				brand="Krishi Margadarshan"
-				copy="© 2024 Krishi Margadarshan. Support: 1800-AGRI-HELP"
+				brand={t('common.brand')}
+				copy={t('common.footerCopy')}
 				brandClassName="shop-footer-brand"
 				copyClassName="shop-footer-copy"
 				footerProps={{ 'data-node-id': '2:414' }}
 				innerProps={{ 'data-node-id': '2:415' }}
 				links={[
-					{ to: '/advisory', label: 'Support Centers' },
-					{ to: '/articles', label: 'FAQ' },
-					{ to: '/advisory', label: 'Privacy' },
-					{ to: '/advisory', label: 'Contact' },
+					{ to: '/advisory', label: t('common.supportCenters') },
+					{ to: '/articles', label: t('common.faq') },
+					{ to: '/advisory', label: t('common.privacy') },
+					{ to: '/advisory', label: t('common.contact') },
 				]}
 			/>
 		</div>

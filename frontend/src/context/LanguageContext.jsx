@@ -1,16 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState } from 'react'
+import i18n, { getInitialLanguage, LANGUAGE_STORAGE_KEY } from '../i18n'
 
 const LanguageContext = createContext(null)
-
-function getInitialLanguage() {
-	if (typeof window === 'undefined') {
-		return 'en'
-	}
-
-	const saved = window.localStorage.getItem('app-language')
-	return saved === 'ne' ? 'ne' : 'en'
-}
 
 export function LanguageProvider({ children }) {
 	const [language, setLanguage] = useState(getInitialLanguage)
@@ -18,8 +10,9 @@ export function LanguageProvider({ children }) {
 	const setAppLanguage = (nextLanguage) => {
 		const normalizedNext = nextLanguage === 'ne' ? 'ne' : 'en'
 		setLanguage(normalizedNext)
+		i18n.changeLanguage(normalizedNext)
 		if (typeof window !== 'undefined') {
-			window.localStorage.setItem('app-language', normalizedNext)
+			window.localStorage.setItem(LANGUAGE_STORAGE_KEY, normalizedNext)
 		}
 	}
 
