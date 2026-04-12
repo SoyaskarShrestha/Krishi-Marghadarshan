@@ -28,6 +28,7 @@ function NavBar({
 		articles: t('navbar.navigation.articles'),
 		shop: t('navbar.navigation.shop'),
 		advisory: t('navbar.navigation.advisory'),
+		advisorPanel: t('navbar.navigation.advisorPanel', { defaultValue: 'Advisor Panel' }),
 		language: isNepali ? t('navbar.language.en') : t('navbar.language.ne'),
 		profile: t('navbar.navigation.profile'),
 	}
@@ -55,6 +56,9 @@ function NavBar({
 					<NavLink to="/articles" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.articles}</NavLink>
 					<NavLink to="/shop" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.shop}</NavLink>
 					<NavLink to="/advisory" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.advisory}</NavLink>
+					{currentUser?.isAdvisor ? (
+						<NavLink to="/advisor-panel" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.advisorPanel}</NavLink>
+					) : null}
 					{currentUser?.isAdmin ? (
 						<NavLink to="/admin-dashboard" className={({ isActive }) => (isActive ? 'active' : '')}>Admin</NavLink>
 					) : null}

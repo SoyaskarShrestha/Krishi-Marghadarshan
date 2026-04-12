@@ -1,9 +1,10 @@
+from django.utils import timezone
 from rest_framework import generics, mixins, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import AdvisoryQuestion
-from .serializers import AdvisoryQuestionSerializer
+from .serializers import AdvisoryQuestionSerializer, AdvisoryReplySerializer
 
 
 ADVISORY_META = {
@@ -76,7 +77,11 @@ class AdvisoryMetaView(APIView):
 class AdvisoryQuestionCreateView(mixins.CreateModelMixin, generics.GenericAPIView):
     queryset = AdvisoryQuestion.objects.all()
     serializer_class = AdvisoryQuestionSerializer
-    permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.IsAuthenticated(), IsAdvisorOrAdmin()]
+        return [permissions.AllowAny()]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -89,6 +94,20 @@ class AdvisoryQuestionCreateView(mixins.CreateModelMixin, generics.GenericAPIVie
             },
             status=201,
         )
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset().order_by("-created_at")
+        status_filter = (request.query_params.get("status") or "").strip().lower()
+        if status_filter in {AdvisoryQuestion.STATUS_PENDING, AdvisoryQuestion.STATUS_ANSWERED}:
+            queryset = queryset.filter(status=status_filter)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class IsAdvisorOrAdmin(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser))
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by("-created_at")
         serializer = self.get_serializer(queryset, many=True)
@@ -97,22 +116,30 @@ class AdvisoryQuestionCreateView(mixins.CreateModelMixin, generics.GenericAPIVie
 
 class AdvisoryQuestionDetailView(
     mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
     generics.GenericAPIView,
 ):
     queryset = AdvisoryQuestion.objects.all().order_by("-created_at")
     serializer_class = AdvisoryQuestionSerializer
-    permission_classes = [permissions.AllowAny]
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
+    permission_classes = [permissions.IsAuthenticated, IsAdvisorOrAdmin]
 
     def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
+        question = self.get_object()
+        serializer = AdvisoryReplySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        question.advisor_reply = serializer.validated_data["advisor_reply"]
+        question.advisor = request.user
+        question.replied_at = timezone.now()
+        question.status = AdvisoryQuestion.STATUS_ANSWERED
+        question.save(update_fields=["advisor_reply", "advisor", "replied_at", "status", "updated_at"])
+
+        output = self.get_serializer(question)
+        return Response(
+            {
+                "message": "Reply sent successfully.",
+                "question": output.data,
+            }
+        )
 
     def get(self, request, *args, **kwargs):    
         return self.retrieve(request, *args, **kwargs)   

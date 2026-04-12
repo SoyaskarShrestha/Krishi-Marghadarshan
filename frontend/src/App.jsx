@@ -12,6 +12,8 @@ import ProtectedRoute from './Components/ProtectedRoute'
 import CompleteProfile from './Components/CompleteProfile'
 import AdminDashboard from './Components/AdminDashboard'
 import AdminRoute from './Components/AdminRoute'
+import AdvisorPanel from './Components/AdvisorPanel'
+import AdvisorRoute from './Components/AdvisorRoute'
 import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
 
@@ -42,6 +44,14 @@ function App() {
 							<ProtectedRoute>
 								<UserProfile />
 							</ProtectedRoute>
+						)}
+					/>
+					<Route
+						path="/advisor-panel"
+						element={(
+							<AdvisorRoute>
+								<AdvisorPanel />
+							</AdvisorRoute>
 						)}
 					/>
 					<Route
