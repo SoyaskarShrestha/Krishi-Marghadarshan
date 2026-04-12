@@ -9,6 +9,7 @@ class Product(models.Model):
     description = models.TextField()
     badge = models.CharField(max_length=50, blank=True)
     badge_tone = models.CharField(max_length=20, blank=True)
+    photo = models.ImageField(upload_to="product_photos/", blank=True, null=True)
 
     def __str__(self):
         return self.name

@@ -10,6 +10,7 @@ class Article(models.Model):
     read_time = models.CharField(max_length=50, blank=True)
     published_label = models.CharField(max_length=50, blank=True)
     featured = models.BooleanField(default=False)
+    photo = models.ImageField(upload_to="articles/", blank=True, null=True)
 
     def __str__(self):
         return self.title
