@@ -89,6 +89,19 @@ class MeView(APIView):
         return Response(UserSerializer(request.user).data)
 
 
+class AdminStatusView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        return Response(
+            {
+                "is_admin": bool(request.user.is_staff or request.user.is_superuser),
+                "is_staff": bool(request.user.is_staff),
+                "is_superuser": bool(request.user.is_superuser),
+            }
+        )
+
+
 class ProfileUpdateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 

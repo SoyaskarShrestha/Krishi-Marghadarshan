@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import CompleteProfileView, LoginView, MeView, OAuthExchangeView, ProfileUpdateView, RegisterView
+from .views import AdminStatusView, CompleteProfileView, LoginView, MeView, OAuthExchangeView, ProfileUpdateView, RegisterView
 
 
 urlpatterns = [
@@ -9,5 +9,6 @@ urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("oauth/", OAuthExchangeView.as_view(), name="oauth"),
     path("me/", MeView.as_view(), name="me"),
+    path("admin-status/", AdminStatusView.as_view(), name="admin-status"),
     path("profile/", ProfileUpdateView.as_view(), name="profile"),
 ]
