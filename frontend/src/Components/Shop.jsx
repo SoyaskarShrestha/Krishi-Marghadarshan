@@ -1,9 +1,11 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import './Shop.css'
 import NavBar from './NavBar'
 import Footer from './Footer'
 import { API_ENDPOINTS, apiRequest } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import heroImage from '../assets/shop/hero.png'
 import exploreArrowIcon from '../assets/shop/icons/explore-arrow.svg'
@@ -21,9 +23,29 @@ import productImage5 from '../assets/shop/product-5.jpg'
 import productImage6 from '../assets/shop/product-6.jpg'
 
 const productImages = [productImage1, productImage2, productImage3, productImage4, productImage5, productImage6]
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, '')
+
+function resolveProductImage(photo, index) {
+	if (typeof photo === 'string' && photo.trim().length > 0) {
+		if (photo.startsWith('http://') || photo.startsWith('https://')) {
+			return photo
+		}
+
+		if (photo.startsWith('/')) {
+			return `${apiOrigin}${photo}`
+		}
+
+		return `${apiOrigin}/${photo}`
+	}
+
+	return productImages[index % productImages.length]
+}
 
 function Shop() {
 	const { t } = useTranslation()
+	const navigate = useNavigate()
+	const { isAuthenticated } = useAuth()
 	const baseCategories = useMemo(
 		() => [
 			{ value: 'all', label: t('shop.allProducts'), checked: true },
@@ -53,6 +75,7 @@ function Shop() {
 	const [isUsingFallbackProducts, setIsUsingFallbackProducts] = useState(true)
 	const [shopError, setShopError] = useState('')
 	const [actionMessage, setActionMessage] = useState('')
+	const [cartCount, setCartCount] = useState(0)
 	const [selectedCategories, setSelectedCategories] = useState(() =>
 		baseCategories.filter((category) => category.checked).map((category) => category.value)
 	)
@@ -73,7 +96,7 @@ function Shop() {
 					category: product.category || 'General',
 					price: Number(product.price || 0).toLocaleString('en-IN'),
 					description: product.description,
-					image: productImages[index % productImages.length],
+					image: resolveProductImage(product.photo, index),
 					badge: product.badge || '',
 					badgeTone: product.badge_tone || 'light',
 				}))
@@ -96,6 +119,32 @@ function Shop() {
 			ignore = true
 		}
 		}, [t])
+
+	useEffect(() => {
+		let ignore = false
+
+		async function loadCartCount() {
+			try {
+				const payload = await apiRequest(API_ENDPOINTS.SHOP_CART)
+				if (!Array.isArray(payload) || ignore) {
+					return
+				}
+
+				const count = payload.reduce((sum, item) => sum + Number(item.quantity || 0), 0)
+				setCartCount(count)
+			} catch {
+				if (!ignore) {
+					setCartCount(0)
+				}
+			}
+		}
+
+		loadCartCount()
+
+		return () => {
+			ignore = true
+		}
+	}, [])
 
 	const categories = useMemo(() => {
 		const fromProducts = Array.from(new Set(products.map((product) => product.category).filter(Boolean))).map((label) => ({
@@ -132,20 +181,27 @@ function Shop() {
 			return
 		}
 
+		if (!isAuthenticated) {
+			setActionMessage('Please login to add products to cart.')
+			navigate('/login')
+			return
+		}
+
 		try {
 			await apiRequest(API_ENDPOINTS.SHOP_CART, {
 				method: 'POST',
 				body: JSON.stringify({ product_id: product.id, quantity: 1 }),
 			})
+			setCartCount((current) => current + 1)
 			setActionMessage(t('shop.addedToCart', { name: product.name }))
 		} catch (error) {
-			setActionMessage(error.message)
+			setActionMessage(error.status === 401 ? 'Please login to add products to cart.' : error.message)
 		}
 	}
 
 	return (
 		<div className="shop-page" data-node-id="2:214">
-			<NavBar showCart cartCount={3} />
+			<NavBar showCart cartCount={cartCount} />
 
 			<main className="shop-shell shop-main" data-node-id="2:215">
 				<section className="shop-hero-grid" data-node-id="2:216">
