@@ -30,7 +30,8 @@ const statIconByKind = {
 
 function WeatherForecast() {
 	const { t } = useTranslation()
-	const [location, setLocation] = useState('Pokhara')
+	const [locationInput, setLocationInput] = useState('Pokhara')
+	const [activeLocation, setActiveLocation] = useState('Pokhara')
 	const sideStats = useMemo(
 		() => [
 			{
@@ -92,7 +93,8 @@ function WeatherForecast() {
 
 	const requestForecast = async (targetLocation) => {
 		try {
-			const payload = await apiRequest(`${API_ENDPOINTS.WEATHER_FORECAST}?location=${encodeURIComponent(targetLocation)}`)
+			const cleanLocation = targetLocation.trim() || 'Pokhara'
+			const payload = await apiRequest(`${API_ENDPOINTS.WEATHER_FORECAST}?location=${encodeURIComponent(cleanLocation)}`)
 			setWeatherData((previous) => ({
 				...previous,
 				...payload,
@@ -101,6 +103,7 @@ function WeatherForecast() {
 					icon: statIconByKind[item.kind] || humidityBadgeIcon,
 				})),
 			}))
+			setActiveLocation(payload.location || cleanLocation)
 			setIsUsingFallbackWeather(false)
 			setWeatherError('')
 		} catch (error) {
@@ -109,34 +112,13 @@ function WeatherForecast() {
 	}
 
 	useEffect(() => {
-		let ignore = false
-		const timer = window.setTimeout(async () => {
-			try {
-				const payload = await apiRequest(`${API_ENDPOINTS.WEATHER_FORECAST}?location=${encodeURIComponent(location)}`)
-				if (!ignore) {
-					setWeatherData((previous) => ({
-						...previous,
-						...payload,
-						stats: (payload.stats || []).map((item) => ({
-							...item,
-							icon: statIconByKind[item.kind] || humidityBadgeIcon,
-						})),
-					}))
-					setIsUsingFallbackWeather(false)
-					setWeatherError('')
-				}
-			} catch (error) {
-				if (!ignore) {
-					setWeatherError(error.message || t('weather.fallbackError'))
-				}
-			}
-		}, 500)
+		requestForecast(activeLocation)
+	}, [activeLocation, t])
 
-		return () => {
-			ignore = true
-			window.clearTimeout(timer)
-		}
-	}, [location, t])
+	const handleSubmit = (event) => {
+		event.preventDefault()
+		setActiveLocation(locationInput)
+	}
 
 	const weeklyWithIcons = useMemo(
 		() => (weatherData.weekly || weeklyForecast).map((item) => ({ ...item, icon: weatherIcons[item.condition] || dayPartlyIcon })),
@@ -152,23 +134,23 @@ function WeatherForecast() {
 				<section className="weather-topbar" data-node-id="2:4">
 					<div>
 						<h2>{t('weather.title')}</h2>
-						<p>{t('weather.description', { location })}</p>
+						<p>{t('weather.description', { location: weatherData.location || activeLocation })}</p>
 					</div>
-					<div className="weather-location-controls">
+					<form className="weather-location-controls" onSubmit={handleSubmit}>
 						<label className="weather-location-input" htmlFor="weather-location">
 							<img src={locationIcon} alt="" aria-hidden="true" />
 							<input
 								id="weather-location"
-								value={location}
-								onChange={(event) => setLocation(event.target.value)}
+								value={locationInput}
+								onChange={(event) => setLocationInput(event.target.value)}
 								placeholder={t('weather.locationPlaceholder')}
 							/>
 						</label>
-						<button type="button" className="weather-detect-btn" onClick={() => requestForecast(location)}>
+						<button type="submit" className="weather-detect-btn">
 							<img src={autoDetectIcon} alt="" aria-hidden="true" />
 							<span>{t('weather.refresh')}</span>
 						</button>
-					</div>
+					</form>
 				</section>
 
 				<section className="weather-hero-grid" data-node-id="2:20">

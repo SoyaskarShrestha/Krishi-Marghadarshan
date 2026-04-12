@@ -22,7 +22,14 @@ function App() {
 					<Route path="/weather" element={<WeatherForecast />} />
 					<Route path="/articles" element={<Articles />} />
 					<Route path="/shop" element={<Shop />} />
-					<Route path="/cart" element={<Cart />} />
+					<Route
+						path="/cart"
+						element={(
+							<ProtectedRoute>
+								<Cart />
+							</ProtectedRoute>
+						)}
+					/>
 					<Route path="/advisory" element={<Advisory />} />
 					<Route path="/signup" element={<SignUp />} />
 					<Route path="/complete-profile" element={<CompleteProfile />} />

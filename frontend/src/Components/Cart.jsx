@@ -4,11 +4,25 @@ import './Cart.css'
 import NavBar from './NavBar'
 import { API_ENDPOINTS, apiRequest } from '../lib/api'
 import { useTranslation } from 'react-i18next'
-import productImage1 from '../assets/homepage/product-1.jpg'
-import productImage2 from '../assets/homepage/product-2.jpg'
-import productImage3 from '../assets/homepage/product-3.jpg'
 
-const cartImages = [productImage1, productImage2, productImage3]
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, '')
+
+function resolveCartImage(photo) {
+	if (typeof photo === 'string' && photo.trim().length > 0) {
+		if (photo.startsWith('http://') || photo.startsWith('https://')) {
+			return photo
+		}
+
+		if (photo.startsWith('/')) {
+			return `${apiOrigin}${photo}`
+		}
+
+		return `${apiOrigin}/${photo}`
+	}
+
+	return ''
+}
 
 function MinusIcon() {
 	return (
@@ -58,49 +72,15 @@ function TruckIcon() {
 
 function Cart() {
 	const { t } = useTranslation()
-	const fallbackCartItems = useMemo(
-		() => [
-			{
-				id: 'fallback-1',
-				name: t('shop.fallbackProducts.0.name'),
-				variant: t('cart.fallbackItems.0.variant', { defaultValue: '25 kg certified pack' }),
-				price: 500,
-				quantity: 1,
-				image: productImage1,
-			},
-			{
-				id: 'fallback-2',
-				name: t('shop.fallbackProducts.1.name'),
-				variant: t('cart.fallbackItems.1.variant', { defaultValue: 'Stainless steel with bamboo grip' }),
-				price: 1250,
-				quantity: 1,
-				image: productImage2,
-			},
-			{
-				id: 'fallback-3',
-				name: t('shop.fallbackProducts.2.name'),
-				variant: t('cart.fallbackItems.2.variant', { defaultValue: 'Liquid soil booster - 1 litre' }),
-				price: 890,
-				quantity: 2,
-				image: productImage3,
-			},
-		],
-		[t]
-	)
-	const [cartItems, setCartItems] = useState(fallbackCartItems)
+	const [cartItems, setCartItems] = useState([])
 	const [cartError, setCartError] = useState('')
-	const [isFallbackMode, setIsFallbackMode] = useState(true)
-
-	useEffect(() => {
-		if (isFallbackMode) {
-			setCartItems(fallbackCartItems)
-		}
-	}, [fallbackCartItems, isFallbackMode])
+	const [isLoading, setIsLoading] = useState(false)
 
 	useEffect(() => {
 		let ignore = false
 
 		async function loadCart() {
+			setIsLoading(true)
 			try {
 				const payload = await apiRequest(API_ENDPOINTS.SHOP_CART)
 				if (!Array.isArray(payload) || ignore) {
@@ -108,21 +88,24 @@ function Cart() {
 				}
 
 				setCartItems(
-					payload.map((item, index) => ({
+					payload.map((item) => ({
 						id: item.id,
 						name: item.product.name,
 						variant: item.product.description,
 						price: Number(item.product.price || 0),
 						quantity: item.quantity,
-						image: cartImages[index % cartImages.length],
+						image: resolveCartImage(item.product.photo),
 					}))
 				)
-				setIsFallbackMode(false)
 				setCartError('')
-			} catch {
+			} catch (error) {
 				if (!ignore) {
-					setIsFallbackMode(true)
-						setCartError(t('cart.fallbackError'))
+					setCartItems([])
+					setCartError(error.status === 401 ? 'Please login to view your cart.' : error.message || t('cart.fallbackError'))
+				}
+			} finally {
+				if (!ignore) {
+					setIsLoading(false)
 				}
 			}
 		}
@@ -132,18 +115,16 @@ function Cart() {
 		return () => {
 			ignore = true
 		}
-	}, [])
+	}, [t])
 
 	const subtotal = useMemo(() => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0), [cartItems])
+	const cartCount = useMemo(() => cartItems.reduce((sum, item) => sum + item.quantity, 0), [cartItems])
 	const deliveryFee = cartItems.length ? 120 : 0
 	const serviceFee = cartItems.length ? 80 : 0
 	const total = subtotal + deliveryFee + serviceFee
 
 	const syncQuantity = async (itemId, nextQuantity) => {
-		if (isFallbackMode || typeof itemId !== 'number') {
-			setCartItems((current) =>
-				current.map((item) => (item.id === itemId ? { ...item, quantity: Math.max(1, nextQuantity) } : item))
-			)
+		if (typeof itemId !== 'number') {
 			return
 		}
 
@@ -161,8 +142,7 @@ function Cart() {
 	}
 
 	const removeItem = async (itemId) => {
-		if (isFallbackMode || typeof itemId !== 'number') {
-			setCartItems((current) => current.filter((item) => item.id !== itemId))
+		if (typeof itemId !== 'number') {
 			return
 		}
 
@@ -176,10 +156,11 @@ function Cart() {
 
 	return (
 		<div className="cart-page">
-						<NavBar showCart cartCount={cartItems.length} />
+			<NavBar showCart cartCount={cartCount} />
 
 			<main className="cart-shell cart-main">
 				{cartError ? <p>{cartError}</p> : null}
+				{isLoading ? <p>Loading...</p> : null}
 				<section className="cart-hero">
 					<div>
 						<span className="cart-kicker">{t('cart.checkoutSummary')}</span>
@@ -187,7 +168,7 @@ function Cart() {
 						<p>{t('cart.review')}</p>
 					</div>
 					<div className="cart-hero-chip">
-						<span>{t('cart.itemsLabel', { count: cartItems.length })}</span>
+						<span>{t('cart.itemsLabel', { count: cartCount })}</span>
 						<strong>{t('cart.currencyPrefix')} {total.toLocaleString()}</strong>
 					</div>
 				</section>
@@ -204,8 +185,8 @@ function Cart() {
 						<div className="cart-item-list">
 							{cartItems.length === 0 ? <p>{t('cart.emptyCart')}</p> : null}
 							{cartItems.map((item) => (
-								<article className="cart-item-card" key={item.name}>
-									<img src={item.image} alt={item.name} className="cart-item-image" />
+								<article className="cart-item-card" key={item.id}>
+									{item.image ? <img src={item.image} alt={item.name} className="cart-item-image" /> : null}
 									<div className="cart-item-copy">
 										<div className="cart-item-top">
 											<div>

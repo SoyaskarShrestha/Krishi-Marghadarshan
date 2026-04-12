@@ -194,7 +194,7 @@ const resources = {
 			weather: {
 				defaultLocation: 'Pokhara',
 				title: 'Weather Forecast',
-				description: 'Monitoring your local climate conditions in {location}',
+				description: '',
 				locationPlaceholder: 'Enter village or district...',
 				refresh: 'Refresh',
 				rightNow: 'RIGHT NOW',
@@ -222,7 +222,7 @@ const resources = {
 				],
 				conditions: { sunny: 'SUNNY', cloudy: 'CLOUDY', rainy: 'RAINY', partly: 'PARTLY' },
 				fallbackError: 'Showing fallback forecast because weather API is unavailable.',
-				locationLabel: 'Monitoring your local climate conditions in {location}',
+				locationLabel: '',
 					humidity: 'Humidity',
 					expectedRainfall: 'Expected Rainfall',
 					weatherSummary: 'Partly Cloudy',

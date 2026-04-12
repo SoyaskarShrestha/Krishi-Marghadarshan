@@ -29,4 +29,8 @@ dist-ssr
 # Python cache/build artifacts
 __pycache__/
 *.py[cod]
+*.pyc.*
 *$py.class
+venv/
+.venv/
+backend/venv/

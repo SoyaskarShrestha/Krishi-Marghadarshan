@@ -16,6 +16,24 @@ import bookmarkIcon from '../assets/articles/icons/bookmark.svg'
 import dropdownIcon from '../assets/articles/icons/dropdown.svg'
 
 const cardImages = [riceFieldsImage, soilHealthImage, pestManagementImage, marketGuideImage]
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, '')
+
+function resolveArticleImage(photo, index) {
+	if (typeof photo === 'string' && photo.trim().length > 0) {
+		if (photo.startsWith('http://') || photo.startsWith('https://')) {
+			return photo
+		}
+
+		if (photo.startsWith('/')) {
+			return `${apiOrigin}${photo}`
+		}
+
+		return `${apiOrigin}/${photo}`
+	}
+
+	return cardImages[index % cardImages.length]
+}
 
 function Articles() {
 	const { t } = useTranslation()
@@ -69,7 +87,7 @@ function Articles() {
 				const mapped = payload.map((article, index) => ({
 					id: article.id,
 					featured: Boolean(article.featured),
-					image: cardImages[index % cardImages.length],
+					image: resolveArticleImage(article.photo, index),
 					badge: article.badge || (article.featured ? t('articles.featuredBadge') : ''),
 					publishedLabel: article.published_label || t('articles.latestLabel'),
 					title: article.title,
