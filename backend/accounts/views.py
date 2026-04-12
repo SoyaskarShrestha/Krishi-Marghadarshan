@@ -5,12 +5,14 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .serializers import (
+    AdminActionLogSerializer,
     CompleteProfileSerializer,
     KrishiTokenObtainPairSerializer,
     OAuthExchangeSerializer,
     RegisterSerializer,
     UserSerializer,
 )
+from .models import AdminActionLog
 
 
 class RegisterView(APIView):
@@ -115,3 +117,14 @@ class ProfileUpdateView(APIView):
                 "user": UserSerializer(user).data,
             }
         )
+
+
+class AdminActivityLogView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_staff and not request.user.is_superuser:
+            return Response({"message": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+
+        logs = AdminActionLog.objects.select_related("actor")[:50]
+        return Response(AdminActionLogSerializer(logs, many=True).data)

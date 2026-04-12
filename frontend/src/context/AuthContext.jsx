@@ -16,6 +16,9 @@ function normalizeUser(user) {
 		name: user.username || user.name || user.email,
 		email: user.email,
 		provider: user.provider || 'password',
+		isStaff: Boolean(user.is_staff),
+		isSuperuser: Boolean(user.is_superuser),
+		isAdmin: Boolean(user.is_superuser),
 		profile: {
 			fullName: user.profile?.full_name || user.profile?.fullName || '',
 			location: user.profile?.location || '',
@@ -244,6 +247,7 @@ export function AuthProvider({ children }) {
 		currentUser,
 		isAuthReady,
 		isAuthenticated: Boolean(currentUser),
+		isAdmin: Boolean(currentUser?.isAdmin),
 		isProfileComplete,
 		signUp,
 		signUpWithProvider,

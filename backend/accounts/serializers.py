@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import UserProfile
+from .models import AdminActionLog, UserProfile
 
 
 User = get_user_model()
@@ -19,11 +19,38 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "email", "username", "provider", "profile_completed", "profile")
+        fields = (
+            "id",
+            "email",
+            "username",
+            "provider",
+            "profile_completed",
+            "is_staff",
+            "is_superuser",
+            "profile",
+        )
 
     def get_profile(self, obj):
         profile, _ = UserProfile.objects.get_or_create(user=obj)
         return UserProfileSerializer(profile).data
+
+
+class AdminActionLogSerializer(serializers.ModelSerializer):
+    actor_email = serializers.CharField(source="actor.email", read_only=True)
+
+    class Meta:
+        model = AdminActionLog
+        fields = (
+            "id",
+            "actor_email",
+            "action",
+            "target_type",
+            "target_label",
+            "target_id",
+            "summary",
+            "metadata",
+            "created_at",
+        )
 
 
 class RegisterSerializer(serializers.Serializer):

@@ -5,6 +5,7 @@ import profileSimpleIcon from '../assets/navbar/profile-simple.svg'
 import searchIcon from '../assets/navbar/search.svg'
 import { useLanguage } from '../context/LanguageContext'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../context/AuthContext'
 
 import './NavBar.css'
 
@@ -17,6 +18,7 @@ function NavBar({
 }) {
 	const { isNepali, toggleLanguage } = useLanguage()
 	const { t } = useTranslation()
+	const { currentUser } = useAuth()
 	const resolvedSearchPlaceholder = searchPlaceholder || t('navbar.searchPlaceholder')
 
 	const labels = {
@@ -53,6 +55,9 @@ function NavBar({
 					<NavLink to="/articles" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.articles}</NavLink>
 					<NavLink to="/shop" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.shop}</NavLink>
 					<NavLink to="/advisory" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.advisory}</NavLink>
+					{currentUser?.isAdmin ? (
+						<NavLink to="/admin-dashboard" className={({ isActive }) => (isActive ? 'active' : '')}>Admin</NavLink>
+					) : null}
 				</nav>
 
 				<div className="navbar-actions">

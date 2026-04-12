@@ -1,8 +1,15 @@
 from django.db.models import Q
 from rest_framework import generics, mixins, permissions
 
+from accounts.models import log_admin_action
+
 from .models import Article
 from .serializers import ArticleSerializer
+
+
+class IsSuperUser(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
 
 
 SEED_ARTICLES = [
@@ -37,7 +44,10 @@ SEED_ARTICLES = [
 class ArticleListCreateView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
     queryset = Article.objects.order_by("id")
     serializer_class = ArticleSerializer
-    permission_classes = [permissions.AllowAny]
+    def get_permissions(self):
+        if self.request.method in permissions.SAFE_METHODS:
+            return [permissions.AllowAny()]
+        return [IsSuperUser()]
 
     def get_queryset(self):
         if not Article.objects.exists():
@@ -72,13 +82,27 @@ class ArticleListCreateView(mixins.ListModelMixin, mixins.CreateModelMixin, gene
         return self.list(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
+        response = self.create(request, *args, **kwargs)
+        if response.status_code == 201:
+            log_admin_action(
+                actor=request.user,
+                action="create",
+                target_type="article",
+                target_label=response.data.get("title", "Article"),
+                target_id=response.data.get("id", ""),
+                summary=f'Created article "{response.data.get("title", "Article")}"',
+                metadata={"category": response.data.get("category", "")},
+            )
+        return response
 
 
 class ArticleDetailView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
-    permission_classes = [permissions.AllowAny]
+    def get_permissions(self):
+        if self.request.method in permissions.SAFE_METHODS:
+            return [permissions.AllowAny()]
+        return [IsSuperUser()]
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
@@ -87,9 +111,34 @@ class ArticleDetailView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixi
         return self.update(request, *args, **kwargs)
 
     def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
+        response = self.partial_update(request, *args, **kwargs)
+        if response.status_code == 200:
+            log_admin_action(
+                actor=request.user,
+                action="update",
+                target_type="article",
+                target_label=response.data.get("title", "Article"),
+                target_id=response.data.get("id", ""),
+                summary=f'Updated article "{response.data.get("title", "Article")}"',
+                metadata={"category": response.data.get("category", "")},
+            )
+        return response
 
     def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+        article = self.get_object()
+        summary = f'Deleted article "{article.title}"'
+        article_id = article.id
+        response = self.destroy(request, *args, **kwargs)
+        if response.status_code == 204:
+            log_admin_action(
+                actor=request.user,
+                action="delete",
+                target_type="article",
+                target_label=article.title,
+                target_id=article_id,
+                summary=summary,
+                metadata={"category": article.category},
+            )
+        return response
 
 

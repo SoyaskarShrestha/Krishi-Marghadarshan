@@ -10,6 +10,8 @@ import SignUp from './Components/SignUp'
 import Login from './Components/Login'
 import ProtectedRoute from './Components/ProtectedRoute'
 import CompleteProfile from './Components/CompleteProfile'
+import AdminDashboard from './Components/AdminDashboard'
+import AdminRoute from './Components/AdminRoute'
 import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
 
@@ -40,6 +42,14 @@ function App() {
 							<ProtectedRoute>
 								<UserProfile />
 							</ProtectedRoute>
+						)}
+					/>
+					<Route
+						path="/admin-dashboard"
+						element={(
+							<AdminRoute>
+								<AdminDashboard />
+							</AdminRoute>
 						)}
 					/>
 					<Route path="*" element={<Navigate to="/" replace />} />
