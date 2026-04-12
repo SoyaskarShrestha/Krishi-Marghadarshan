@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class Article(models.Model):
@@ -14,3 +15,18 @@ class Article(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class SavedArticle(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="saved_articles")
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name="saved_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "article"], name="unique_saved_article_per_user"),
+        ]
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.email} saved {self.article.title}"

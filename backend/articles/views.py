@@ -1,10 +1,11 @@
 from django.db.models import Q
-from rest_framework import generics, mixins, permissions
+from rest_framework import generics, mixins, permissions, status
+from rest_framework.response import Response
 
 from accounts.models import log_admin_action
 
-from .models import Article
-from .serializers import ArticleSerializer
+from .models import Article, SavedArticle
+from .serializers import ArticleSerializer, SavedArticleSerializer
 
 
 class IsSuperUser(permissions.BasePermission):
@@ -124,21 +125,40 @@ class ArticleDetailView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixi
             )
         return response
 
-    def delete(self, request, *args, **kwargs):
-        article = self.get_object()
-        summary = f'Deleted article "{article.title}"'
-        article_id = article.id
-        response = self.destroy(request, *args, **kwargs)
-        if response.status_code == 204:
-            log_admin_action(
-                actor=request.user,
-                action="delete",
-                target_type="article",
-                target_label=article.title,
-                target_id=article_id,
-                summary=summary,
-                metadata={"category": article.category},
-            )
-        return response
+
+class SavedArticleListCreateView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+    serializer_class = SavedArticleSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return SavedArticle.objects.filter(user=self.request.user).select_related("article")
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        article = serializer.validated_data["article"]
+
+        saved, created = SavedArticle.objects.get_or_create(user=request.user, article=article)
+        output = self.get_serializer(saved)
+        return Response(
+            {
+                "message": "Article saved." if created else "Article already saved.",
+                "saved": output.data,
+            },
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+class SavedArticleDetailView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, article_id, *args, **kwargs):
+        deleted_count, _ = SavedArticle.objects.filter(user=request.user, article_id=article_id).delete()
+        if deleted_count == 0:
+            return Response({"message": "Saved article not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 

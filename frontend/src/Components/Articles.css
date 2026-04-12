@@ -278,6 +278,15 @@
   height: 16px;
 }
 
+.articles-featured-actions {
+  margin-top: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
 .articles-mini-card {
   border-radius: 32px;
   overflow: hidden;
@@ -341,19 +350,45 @@
 }
 
 .articles-bookmark-btn {
-  width: 40px;
-  height: 40px;
+  min-height: 40px;
   border: 0;
   border-radius: 999px;
   background: #efeeea;
-  display: grid;
-  place-items: center;
-  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0 0.8rem;
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 180ms ease;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2f372d;
 }
 
 .articles-bookmark-btn img {
   width: 14px;
   height: 18px;
+}
+
+.articles-bookmark-pill {
+  min-width: 84px;
+}
+
+.articles-bookmark-btn.saved {
+  background: #d5f1bf;
+}
+
+.articles-bookmark-btn:active {
+  transform: scale(0.95);
+}
+
+.articles-save-feedback {
+  border-radius: 12px;
+  background: #f3efe8;
+  padding: 10px 14px;
+  color: #4b5148;
 }
 
 .articles-cta-wrap {

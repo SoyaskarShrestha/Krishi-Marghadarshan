@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
 	AUTH_PROFILE: import.meta.env.VITE_API_AUTH_PROFILE || '/auth/profile/',
 	AUTH_ADMIN_ACTIVITY: import.meta.env.VITE_API_AUTH_ADMIN_ACTIVITY || '/auth/admin-activity/',
 	ARTICLES: import.meta.env.VITE_API_ARTICLES || '/articles/',
+	ARTICLES_SAVED: import.meta.env.VITE_API_ARTICLES_SAVED || '/articles/saved/',
 	SHOP_PRODUCTS: import.meta.env.VITE_API_SHOP_PRODUCTS || '/shop/products/',
 	SHOP_CART: import.meta.env.VITE_API_SHOP_CART || '/shop/cart/',
 	ADVISORY_META: import.meta.env.VITE_API_ADVISORY_META || '/advisory/meta/',

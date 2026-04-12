@@ -76,10 +76,7 @@ function UserProfile() {
 	const [editError, setEditError] = useState('')
 	const [saveSuccessMessage, setSaveSuccessMessage] = useState('')
 	const [editForm, setEditForm] = useState(() => buildEditForm(currentUser))
-	const [savedArticles, setSavedArticles] = useState([
-		{ title: t('userProfile.savedArticlesItem1'), image: savedArticleImage1 },
-		{ title: t('userProfile.savedArticlesItem2'), image: savedArticleImage2 },
-	])
+	const [savedArticles, setSavedArticles] = useState([])
 
 	const displayName = currentUser?.name || t('userProfile.fallbackName')
 	const displayFullName = currentUser?.profile?.fullName || displayName
@@ -104,19 +101,24 @@ function UserProfile() {
 
 		async function loadSavedArticles() {
 			try {
-				const payload = await apiRequest(API_ENDPOINTS.ARTICLES)
+				const payload = await apiRequest(API_ENDPOINTS.ARTICLES_SAVED)
 				if (!Array.isArray(payload) || ignore || payload.length === 0) {
+					if (!ignore) {
+						setSavedArticles([])
+					}
 					return
 				}
 
 				setSavedArticles(
-					payload.slice(0, 2).map((article, index) => ({
-						title: article.title,
+					payload.slice(0, 4).map((item, index) => ({
+						title: item.article?.title,
 						image: savedArticleImages[index % savedArticleImages.length],
 					}))
 				)
 			} catch {
-				// Keep fallback list if API is unavailable.
+				if (!ignore) {
+					setSavedArticles([])
+				}
 			}
 		}
 
@@ -244,11 +246,12 @@ function UserProfile() {
 					<article className="member-card member-saved-card">
 						<div className="member-card-top">
 							<div className="member-card-icon dark"><BookmarkIcon /></div>
-							<strong>08</strong>
+							<strong>{String(savedArticles.length).padStart(2, '0')}</strong>
 						</div>
 						<h3>{t('userProfile.savedArticles')}</h3>
 						<p>{t('userProfile.savedArticlesNepali')}</p>
 						<div className="member-saved-list">
+							{savedArticles.length === 0 ? <span className="member-saved-empty">No saved articles yet.</span> : null}
 							{savedArticles.map((article) => (
 								<div className="member-saved-item" key={article.title}>
 									<img src={article.image} alt={article.title} />
@@ -260,7 +263,7 @@ function UserProfile() {
 
 					<article className="member-card member-plain-card">
 						<small>{t('userProfile.weatherAlertLocation')}</small>
-						<h3>{t('userProfile.weatherAlertValue')}</h3>
+						<h3>{displayLocation}</h3>
 					</article>
 
 					<article className="member-card member-plain-card">
