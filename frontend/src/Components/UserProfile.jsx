@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import './UserProfile.css'
@@ -24,6 +24,22 @@ import logoutIcon from '../assets/user-profile/icon-logout.svg'
 import { useTranslation } from 'react-i18next'
 
 const savedArticleImages = [savedArticleImage1, savedArticleImage2]
+const MAX_PROFILE_PHOTO_BYTES = 5 * 1024 * 1024
+
+function resolveProfilePhotoUrl(photoPath) {
+	if (!photoPath) {
+		return userProfileImage
+	}
+
+	if (/^https?:\/\//i.test(photoPath)) {
+		return photoPath
+	}
+
+	const apiBase = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+	const origin = apiBase.replace(/\/api\/?$/, '')
+	const normalizedPath = photoPath.startsWith('/') ? photoPath : `/${photoPath}`
+	return `${origin}${normalizedPath}`
+}
 
 function buildEditForm(user) {
 	return {
@@ -69,20 +85,50 @@ function LanguageIcon() {
 
 function UserProfile() {
 	const navigate = useNavigate()
-	const { currentUser, logout, updateProfile } = useAuth()
+	const { currentUser, logout, updateProfile, uploadProfilePhoto } = useAuth()
 	const { isNepali, setLanguage } = useLanguage()
 	const { t } = useTranslation()
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 	const [editError, setEditError] = useState('')
 	const [saveSuccessMessage, setSaveSuccessMessage] = useState('')
+	const [photoMessage, setPhotoMessage] = useState('')
+	const [photoError, setPhotoError] = useState('')
 	const [editForm, setEditForm] = useState(() => buildEditForm(currentUser))
 	const [savedArticles, setSavedArticles] = useState([])
+	const [orderSummary, setOrderSummary] = useState({
+		itemCount: 0,
+		totalQuantity: 0,
+		lastUpdated: '',
+		isLoading: true,
+		hasError: false,
+	})
+	const [consultationSummary, setConsultationSummary] = useState({
+		availableAdvisors: null,
+		avgResponseMinutes: null,
+		myPendingQuestions: 0,
+		myAnsweredThisWeek: 0,
+		isLoading: true,
+		hasError: false,
+	})
+	const [weatherCard, setWeatherCard] = useState({
+		location: '',
+		alertLevel: 'low',
+		rainfall: '--',
+		tempMin: '--',
+		tempMax: '--',
+		advisoryNote: '',
+		updatedAt: '',
+		isLoading: true,
+		hasError: false,
+	})
 
 	const displayName = currentUser?.name || t('userProfile.fallbackName')
 	const displayFullName = currentUser?.profile?.fullName || displayName
 	const displayPhone = currentUser?.profile?.phone || t('userProfile.fallbackPhone')
 	const displayLocation = currentUser?.profile?.location || t('userProfile.fallbackLocation')
 	const displayCropType = currentUser?.profile?.cropType || t('userProfile.fallbackCropType')
+	const profilePhotoUrl = resolveProfilePhotoUrl(currentUser?.profile?.profilePhoto)
+	const fileInputRef = useRef(null)
 
 	useEffect(() => {
 		if (!saveSuccessMessage) {
@@ -98,6 +144,39 @@ function UserProfile() {
 
 	useEffect(() => {
 		let ignore = false
+
+		async function loadOrderSummary() {
+			setOrderSummary((previous) => ({ ...previous, isLoading: true, hasError: false }))
+
+			try {
+				const payload = await apiRequest(API_ENDPOINTS.SHOP_CART)
+				const items = Array.isArray(payload) ? payload : []
+				const totalQuantity = items.reduce((sum, item) => sum + (Number(item?.quantity) || 0), 0)
+				const latestUpdated = items
+					.map((item) => item?.updated_at)
+					.filter(Boolean)
+					.sort()
+					.pop()
+
+				if (!ignore) {
+					setOrderSummary({
+						itemCount: items.length,
+						totalQuantity,
+						lastUpdated: latestUpdated ? new Date(latestUpdated).toLocaleString() : '',
+						isLoading: false,
+						hasError: false,
+					})
+				}
+			} catch {
+				if (!ignore) {
+					setOrderSummary((previous) => ({
+						...previous,
+						isLoading: false,
+						hasError: true,
+					}))
+				}
+			}
+		}
 
 		async function loadSavedArticles() {
 			try {
@@ -123,11 +202,165 @@ function UserProfile() {
 		}
 
 		loadSavedArticles()
+		loadOrderSummary()
+		const ordersIntervalId = window.setInterval(loadOrderSummary, 5 * 60 * 1000)
 
 		return () => {
 			ignore = true
+			window.clearInterval(ordersIntervalId)
 		}
 	}, [])
+
+	useEffect(() => {
+		let ignore = false
+
+		async function loadWeatherCard() {
+			setWeatherCard((previous) => ({
+				...previous,
+				isLoading: true,
+				hasError: false,
+			}))
+
+			try {
+				const payload = await apiRequest(`${API_ENDPOINTS.WEATHER_FORECAST}?location=${encodeURIComponent(displayLocation)}`)
+
+				const rainfallRaw = payload?.stats?.find((item) => item.kind === 'rainfall')?.value || '--'
+				const rainfallNumber = Number.parseInt(String(rainfallRaw).replace(/[^0-9]/g, ''), 10)
+				let alertLevel = 'low'
+				if (Number.isFinite(rainfallNumber) && rainfallNumber >= 20) {
+					alertLevel = 'high'
+				} else if (Number.isFinite(rainfallNumber) && rainfallNumber >= 5) {
+					alertLevel = 'moderate'
+				}
+
+				const today = payload?.weekly?.[0]
+				const note = (payload?.guide?.body || '').split('. ')[0]
+
+				if (!ignore) {
+					setWeatherCard({
+						location: payload?.location || displayLocation,
+						alertLevel,
+						rainfall: rainfallRaw,
+						tempMin: today?.low || '--',
+						tempMax: today?.high || '--',
+						advisoryNote: note,
+						updatedAt: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+						isLoading: false,
+						hasError: false,
+					})
+				}
+			} catch {
+				if (!ignore) {
+					setWeatherCard({
+						location: displayLocation,
+						alertLevel: 'low',
+						rainfall: '--',
+						tempMin: '--',
+						tempMax: '--',
+						advisoryNote: '',
+						updatedAt: '',
+						isLoading: false,
+						hasError: true,
+					})
+				}
+			}
+		}
+
+		loadWeatherCard()
+		const weatherIntervalId = window.setInterval(loadWeatherCard, 5 * 60 * 1000)
+
+		return () => {
+			ignore = true
+			window.clearInterval(weatherIntervalId)
+		}
+	}, [displayLocation])
+
+	useEffect(() => {
+		let ignore = false
+
+		async function loadConsultationSummary() {
+			setConsultationSummary((previous) => ({ ...previous, isLoading: true, hasError: false }))
+
+			try {
+				const payload = await apiRequest(API_ENDPOINTS.AUTH_CONSULTATION_SUMMARY)
+				if (!ignore) {
+					setConsultationSummary({
+						availableAdvisors: typeof payload?.available_advisors === 'number' ? payload.available_advisors : null,
+						avgResponseMinutes: typeof payload?.avg_response_minutes === 'number' ? payload.avg_response_minutes : null,
+						myPendingQuestions: typeof payload?.my_pending_questions === 'number' ? payload.my_pending_questions : 0,
+						myAnsweredThisWeek: typeof payload?.my_answered_this_week === 'number' ? payload.my_answered_this_week : 0,
+						isLoading: false,
+						hasError: false,
+					})
+				}
+			} catch {
+				if (!ignore) {
+					setConsultationSummary((previous) => ({
+						...previous,
+						isLoading: false,
+						hasError: true,
+					}))
+				}
+			}
+		}
+
+		loadConsultationSummary()
+		const consultationIntervalId = window.setInterval(loadConsultationSummary, 5 * 60 * 1000)
+
+		return () => {
+			ignore = true
+			window.clearInterval(consultationIntervalId)
+		}
+	}, [])
+
+	const formatDuration = (totalMinutes) => {
+		if (typeof totalMinutes !== 'number' || totalMinutes < 0) {
+			return null
+		}
+
+		const hours = Math.floor(totalMinutes / 60)
+		const minutes = totalMinutes % 60
+
+		if (hours === 0) {
+			return `${minutes}${t('userProfile.minuteShort')}`
+		}
+
+		if (minutes === 0) {
+			return `${hours}${t('userProfile.hourShort')}`
+		}
+
+		return `${hours}${t('userProfile.hourShort')} ${minutes}${t('userProfile.minuteShort')}`
+	}
+
+	const availabilityText = consultationSummary.isLoading
+		? t('userProfile.consultationsChecking')
+		: consultationSummary.hasError || consultationSummary.availableAdvisors === null
+			? t('userProfile.consultationsUnavailable')
+			: t('userProfile.consultationsAvailableNow', { count: consultationSummary.availableAdvisors })
+
+	const avgReplyText = formatDuration(consultationSummary.avgResponseMinutes)
+
+	const weatherAlertLabelByLevel = {
+		low: t('userProfile.weatherAlertRiskLow'),
+		moderate: t('userProfile.weatherAlertRiskModerate'),
+		high: t('userProfile.weatherAlertRiskHigh'),
+	}
+
+	const weatherAlertLabel = weatherAlertLabelByLevel[weatherCard.alertLevel] || weatherAlertLabelByLevel.low
+	const weatherDetailsLink = `/weather?location=${encodeURIComponent((weatherCard.location || displayLocation || '').trim())}`
+
+	const orderCardDescription = orderSummary.isLoading
+		? t('userProfile.orderHistoryLoading')
+		: orderSummary.hasError
+			? t('userProfile.orderHistoryUnavailable')
+			: orderSummary.itemCount === 0
+				? t('userProfile.orderHistoryEmpty')
+				: t('userProfile.orderHistoryDescriptionDynamic', {
+					count: orderSummary.itemCount,
+					quantity: orderSummary.totalQuantity,
+				})
+
+	const orderCardCta = t('userProfile.viewRecentOrdersDynamic', { count: orderSummary.itemCount })
 
 	const handleEditInputChange = (event) => {
 		const { name, value } = event.target
@@ -166,23 +399,68 @@ function UserProfile() {
 		setIsEditModalOpen(true)
 	}
 
+	const handleAvatarButtonClick = () => {
+		fileInputRef.current?.click()
+	}
+
+	const handlePhotoFileChange = async (event) => {
+		const file = event.target.files?.[0]
+		if (!file) {
+			return
+		}
+
+		setPhotoMessage('')
+		setPhotoError('')
+
+		if (!file.type || !file.type.startsWith('image/')) {
+			setPhotoError(t('userProfile.profilePhotoInvalidType'))
+			event.target.value = ''
+			return
+		}
+
+		if (file.size > MAX_PROFILE_PHOTO_BYTES) {
+			setPhotoError(t('userProfile.profilePhotoTooLarge', { maxMB: 5 }))
+			event.target.value = ''
+			return
+		}
+
+		const result = await uploadProfilePhoto(file)
+		if (!result.ok) {
+			setPhotoError(result.message || t('userProfile.profilePhotoUploadFailed'))
+			event.target.value = ''
+			return
+		}
+
+		setPhotoMessage(result.message || t('userProfile.profilePhotoUploaded'))
+		event.target.value = ''
+	}
+
 	return (
 		<div className="member-page">
 			<NavBar showSettings />
 
 			<main className="member-shell member-main">
 				{saveSuccessMessage ? <div className="member-save-success">{saveSuccessMessage}</div> : null}
+				{photoMessage ? <div className="member-save-success">{photoMessage}</div> : null}
+				{photoError ? <div className="member-edit-error">{photoError}</div> : null}
 
 				<section className="member-profile-card">
 					<div className="member-avatar-wrap">
 						<div className="member-avatar-circle">
-							<img src={userProfileImage} alt="Rajesh Hamal" />
+							<img src={profilePhotoUrl} alt={displayName} />
 						</div>
+						<input
+							type="file"
+							accept="image/*"
+							ref={fileInputRef}
+							onChange={handlePhotoFileChange}
+							className="member-avatar-file-input"
+						/>
 						<button
 							type="button"
 							className="member-avatar-edit"
-							aria-label={t('userProfile.editAria')}
-							onClick={handleOpenEditModal}
+							aria-label={t('userProfile.uploadPhotoAria')}
+							onClick={handleAvatarButtonClick}
 						>
 							<img src={editIcon} alt="" aria-hidden="true" className="member-icon-svg" />
 						</button>
@@ -197,6 +475,9 @@ function UserProfile() {
 							<div className="member-tag"><span className="member-inline-icon"><PinIcon /></span><span>{displayLocation}</span></div>
 							<div className="member-tag"><span className="member-inline-icon"><CropIcon /></span><span>{displayCropType}</span></div>
 						</div>
+						<button type="button" className="member-profile-edit-button" onClick={handleOpenEditModal}>
+							{t('userProfile.editDetails')}
+						</button>
 					</div>
 				</section>
 
@@ -205,9 +486,10 @@ function UserProfile() {
 						<div className="member-card-icon green"><BagIcon /></div>
 						<div className="member-history-copy">
 							<h3>{t('userProfile.orderHistory')}</h3>
-							<p>{t('userProfile.orderHistoryDescription')}</p>
+							<p>{orderCardDescription}</p>
+							{orderSummary.lastUpdated ? <small className="member-history-meta">{t('userProfile.orderHistoryUpdated', { time: orderSummary.lastUpdated })}</small> : null}
 							<Link to="/cart">
-								<span>{t('userProfile.viewRecentOrders')}</span>
+								<span>{orderCardCta}</span>
 								<span className="member-history-arrow"><ArrowRightIcon /></span>
 							</Link>
 						</div>
@@ -261,15 +543,35 @@ function UserProfile() {
 						</div>
 					</article>
 
-					<article className="member-card member-plain-card">
+					<Link to={weatherDetailsLink} className="member-card member-plain-card member-link-card">
 						<small>{t('userProfile.weatherAlertLocation')}</small>
-						<h3>{displayLocation}</h3>
-					</article>
+						<h3>{weatherCard.location || displayLocation}</h3>
+						{weatherCard.isLoading ? <p className="member-consultation-meta">{t('userProfile.weatherAlertLoading')}</p> : null}
+						{weatherCard.hasError ? <p className="member-consultation-meta">{t('userProfile.weatherAlertUnavailable')}</p> : null}
+						{!weatherCard.isLoading && !weatherCard.hasError ? (
+							<>
+								<span className={`member-weather-risk ${weatherCard.alertLevel}`}>{weatherAlertLabel}</span>
+								<p className="member-consultation-meta"><span className="member-meta-icon rain" aria-hidden="true" />{t('userProfile.weatherAlertRainfall', { value: weatherCard.rainfall })}</p>
+								<p className="member-consultation-meta"><span className="member-meta-icon temp" aria-hidden="true" />{t('userProfile.weatherAlertTempRange', { min: weatherCard.tempMin, max: weatherCard.tempMax })}</p>
+								{weatherCard.advisoryNote ? <p className="member-consultation-meta"><span className="member-meta-icon note" aria-hidden="true" />{t('userProfile.weatherAlertAdvice', { note: weatherCard.advisoryNote })}</p> : null}
+								{weatherCard.updatedAt ? <p className="member-consultation-meta">{t('userProfile.weatherAlertUpdated', { time: weatherCard.updatedAt })}</p> : null}
+							</>
+						) : null}
+						<span className="member-link-hint">{t('userProfile.openWeatherDetails')}</span>
+					</Link>
 
-					<article className="member-card member-plain-card">
+					<Link to="/advisory" className="member-card member-plain-card member-link-card">
 						<small>{t('userProfile.consultations')}</small>
-						<h3>{t('userProfile.consultationsValue')}</h3>
-					</article>
+						<h3>{availabilityText}</h3>
+						<p className="member-consultation-meta"><span className="member-meta-icon pending" aria-hidden="true" />{t('userProfile.consultationsPendingQuestions', { count: consultationSummary.myPendingQuestions })}</p>
+						<p className="member-consultation-meta"><span className="member-meta-icon answered" aria-hidden="true" />{t('userProfile.consultationsAnsweredThisWeek', { count: consultationSummary.myAnsweredThisWeek })}</p>
+						<p className="member-consultation-meta">
+							{avgReplyText
+								? t('userProfile.consultationsAvgReply', { time: avgReplyText })
+								: t('userProfile.consultationsAvgReplyUnavailable')}
+						</p>
+						<span className="member-link-hint">{t('userProfile.openConsultationDetails')}</span>
+					</Link>
 				</section>
 
 				<section className="member-logout-section">

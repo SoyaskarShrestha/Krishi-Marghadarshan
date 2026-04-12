@@ -1,4 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import './WeatherForecast.css'
 import NavBar from './NavBar'
 import Footer from './Footer'
@@ -47,11 +48,13 @@ function sanitizeFilePart(value) {
 function WeatherForecast() {
 	const { t } = useTranslation()
 	const { currentUser } = useAuth()
+	const [searchParams] = useSearchParams()
+	const queryLocation = (searchParams.get('location') || '').trim()
 	const [locationInput, setLocationInput] = useState('')
 	const [activeLocationOverride, setActiveLocationOverride] = useState('')
 	const profileLocation = currentUser?.profile?.location?.trim() || ''
 	const defaultLocation = profileLocation || 'Pokhara'
-	const activeLocation = activeLocationOverride || defaultLocation
+	const activeLocation = activeLocationOverride || queryLocation || defaultLocation
 	const sideStats = useMemo(
 		() => [
 			{

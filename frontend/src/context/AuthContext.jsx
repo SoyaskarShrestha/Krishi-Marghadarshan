@@ -25,6 +25,7 @@ function normalizeUser(user) {
 			location: user.profile?.location || '',
 			cropType: user.profile?.crop_type || user.profile?.cropType || '',
 			phone: user.profile?.phone || '',
+			profilePhoto: user.profile?.profile_photo || user.profile?.profilePhoto || '',
 		},
 	}
 }
@@ -183,6 +184,26 @@ export function AuthProvider({ children }) {
 		}
 	}
 
+	const uploadProfilePhoto = async (file) => {
+		try {
+			const formData = new FormData()
+			formData.append('profile_photo', file)
+
+			const result = await apiRequest(API_ENDPOINTS.AUTH_PROFILE_PHOTO, {
+				method: 'PUT',
+				body: formData,
+			})
+
+			if (result.user) {
+				setCurrentUser(normalizeUser(result.user))
+			}
+
+			return { ok: true, message: result.message }
+		} catch (error) {
+			return { ok: false, message: error.message }
+		}
+	}
+
 	const login = async ({ email, password }) => {
 		try {
 			const payload = await apiRequest(API_ENDPOINTS.AUTH_LOGIN, {
@@ -254,6 +275,7 @@ export function AuthProvider({ children }) {
 		signUp,
 		signUpWithProvider,
 		updateProfile,
+		uploadProfilePhoto,
 		login,
 		loginWithProvider,
 		logout,

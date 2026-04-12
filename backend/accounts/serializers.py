@@ -9,9 +9,11 @@ User = get_user_model()
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    profile_photo = serializers.ImageField(required=False, allow_null=True)
+
     class Meta:
         model = UserProfile
-        fields = ("full_name", "location", "crop_type", "phone")
+        fields = ("full_name", "location", "crop_type", "phone", "profile_photo")
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -32,7 +34,13 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_profile(self, obj):
         profile, _ = UserProfile.objects.get_or_create(user=obj)
-        return UserProfileSerializer(profile).data
+        return UserProfileSerializer(profile, context=self.context).data
+
+
+class ProfilePhotoUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ("profile_photo",)
 
 
 class AdminActionLogSerializer(serializers.ModelSerializer):
