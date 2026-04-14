@@ -1,11 +1,11 @@
 ﻿import { NavLink } from 'react-router-dom'
-import bagIcon from '../assets/navbar/bag.svg'
-import languageIcon from '../assets/navbar/language.svg'
-import profileSimpleIcon from '../assets/navbar/profile-simple.svg'
-import searchIcon from '../assets/navbar/search.svg'
-import { useLanguage } from '../context/LanguageContext'
+import bagIcon from '../../assets/navbar/bag.svg'
+import languageIcon from '../../assets/navbar/language.svg'
+import profileSimpleIcon from '../../assets/navbar/profile-simple.svg'
+import searchIcon from '../../assets/navbar/search.svg'
+import { useLanguage } from '../../context/LanguageContext'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 
 import './NavBar.css'
 

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import NavBar from './NavBar'
+import NavBar from '../layout/NavBar'
 import './AdminDashboard.css'
-import { API_ENDPOINTS, apiRequest } from '../lib/api'
+import { API_ENDPOINTS, apiRequest } from '../../lib/api'
 
 const emptyProduct = {
 	name: '',

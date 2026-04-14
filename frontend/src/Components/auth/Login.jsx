@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import NavBar from './NavBar'
-import Footer from './Footer'
-import { useAuth } from '../context/AuthContext'
+import NavBar from '../layout/NavBar'
+import Footer from '../layout/Footer'
+import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import './Auth.css'
 

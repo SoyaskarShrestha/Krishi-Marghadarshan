@@ -1,8 +1,8 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import './Cart.css'
-import NavBar from './NavBar'
-import { API_ENDPOINTS, apiRequest } from '../lib/api'
+import NavBar from '../layout/NavBar'
+import { API_ENDPOINTS, apiRequest } from '../../lib/api'
 import { useTranslation } from 'react-i18next'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
