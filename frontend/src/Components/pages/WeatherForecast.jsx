@@ -1,20 +1,22 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import './WeatherForecast.css'
-import NavBar from './NavBar'
-import Footer from './Footer'
-import { API_ENDPOINTS, apiRequest } from '../lib/api'
+import NavBar from '../layout/NavBar'
+import Footer from '../layout/Footer'
+import { API_ENDPOINTS, apiRequest } from '../../lib/api'
+import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from 'react-i18next'
-import autoDetectIcon from '../assets/weather/icons/auto-detect.svg'
-import cloudIcon from '../assets/weather/icons/cloud.svg'
-import dayCloudyIcon from '../assets/weather/icons/day-cloudy.svg'
-import dayPartlyIcon from '../assets/weather/icons/day-partly.svg'
-import dayRainyIcon from '../assets/weather/icons/day-rainy.svg'
-import daySunnyIcon from '../assets/weather/icons/day-sunny.svg'
-import guideImage from '../assets/weather/guide-figma.jpg'
-import heroImage from '../assets/weather/hero-figma.jpg'
-import humidityBadgeIcon from '../assets/weather/icons/humidity-badge.svg'
-import locationIcon from '../assets/weather/icons/location.svg'
-import rainBadgeIcon from '../assets/weather/icons/rain-badge.svg'
+import autoDetectIcon from '../../assets/weather/icons/auto-detect.svg'
+import cloudIcon from '../../assets/weather/icons/cloud.svg'
+import dayCloudyIcon from '../../assets/weather/icons/day-cloudy.svg'
+import dayPartlyIcon from '../../assets/weather/icons/day-partly.svg'
+import dayRainyIcon from '../../assets/weather/icons/day-rainy.svg'
+import daySunnyIcon from '../../assets/weather/icons/day-sunny.svg'
+import guideImage from '../../assets/weather/guide-figma.jpg'
+import heroImage from '../../assets/weather/hero-figma.jpg'
+import humidityBadgeIcon from '../../assets/weather/icons/humidity-badge.svg'
+import locationIcon from '../../assets/weather/icons/location.svg'
+import rainBadgeIcon from '../../assets/weather/icons/rain-badge.svg'
 
 const weatherIcons = {
 	SUNNY: daySunnyIcon,
@@ -28,10 +30,31 @@ const statIconByKind = {
 	rainfall: rainBadgeIcon,
 }
 
+function formatLocalTime(dateValue = new Date()) {
+	return dateValue.toLocaleTimeString([], {
+		hour: 'numeric',
+		minute: '2-digit',
+		hour12: true,
+	})
+}
+
+function sanitizeFilePart(value) {
+	return String(value || 'weather')
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '') || 'weather'
+}
+
 function WeatherForecast() {
 	const { t } = useTranslation()
-	const [locationInput, setLocationInput] = useState('Pokhara')
-	const [activeLocation, setActiveLocation] = useState('Pokhara')
+	const { currentUser } = useAuth()
+	const [searchParams] = useSearchParams()
+	const queryLocation = (searchParams.get('location') || '').trim()
+	const [locationInput, setLocationInput] = useState('')
+	const [activeLocationOverride, setActiveLocationOverride] = useState('')
+	const profileLocation = currentUser?.profile?.location?.trim() || ''
+	const defaultLocation = profileLocation || 'Pokhara'
+	const activeLocation = activeLocationOverride || queryLocation || defaultLocation
 	const sideStats = useMemo(
 		() => [
 			{
@@ -84,14 +107,23 @@ function WeatherForecast() {
 	const [weatherData, setWeatherData] = useState(fallbackWeatherData)
 	const [isUsingFallbackWeather, setIsUsingFallbackWeather] = useState(true)
 	const [weatherError, setWeatherError] = useState('')
+	const [liveTimeLabel, setLiveTimeLabel] = useState(() => formatLocalTime())
+	const displayWeatherData = isUsingFallbackWeather ? fallbackWeatherData : weatherData
+	const displayedTimestamp = isUsingFallbackWeather
+		? liveTimeLabel
+		: (displayWeatherData.current?.timestamp || liveTimeLabel)
 
 	useEffect(() => {
-		if (isUsingFallbackWeather) {
-			setWeatherData(fallbackWeatherData)
-		}
-	}, [fallbackWeatherData, isUsingFallbackWeather])
+		const intervalId = window.setInterval(() => {
+			setLiveTimeLabel(formatLocalTime())
+		}, 60_000)
 
-	const requestForecast = async (targetLocation) => {
+		return () => {
+			window.clearInterval(intervalId)
+		}
+	}, [])
+
+	const requestForecast = useCallback(async (targetLocation) => {
 		try {
 			const cleanLocation = targetLocation.trim() || 'Pokhara'
 			const payload = await apiRequest(`${API_ENDPOINTS.WEATHER_FORECAST}?location=${encodeURIComponent(cleanLocation)}`)
@@ -103,27 +135,67 @@ function WeatherForecast() {
 					icon: statIconByKind[item.kind] || humidityBadgeIcon,
 				})),
 			}))
-			setActiveLocation(payload.location || cleanLocation)
 			setIsUsingFallbackWeather(false)
 			setWeatherError('')
 		} catch (error) {
+			setIsUsingFallbackWeather(true)
 			setWeatherError(error.message || t('weather.fallbackError'))
 		}
-	}
+	}, [t])
 
 	useEffect(() => {
-		requestForecast(activeLocation)
-	}, [activeLocation, t])
+		const runId = window.setTimeout(() => {
+			requestForecast(activeLocation)
+		}, 0)
+
+		return () => {
+			window.clearTimeout(runId)
+		}
+	}, [activeLocation, requestForecast])
 
 	const handleSubmit = (event) => {
 		event.preventDefault()
-		setActiveLocation(locationInput)
+		const targetLocation = locationInput.trim() || activeLocation || defaultLocation
+		setActiveLocationOverride(targetLocation)
+		requestForecast(targetLocation)
 	}
 
-	const weeklyWithIcons = useMemo(
-		() => (weatherData.weekly || weeklyForecast).map((item) => ({ ...item, icon: weatherIcons[item.condition] || dayPartlyIcon })),
-		[weatherData.weekly]
-	)
+	const handleDownloadReport = () => {
+		const timestamp = new Date()
+		const safeLocation = displayWeatherData.location || activeLocation || defaultLocation
+		const reportLines = [
+			'Krishi Margadarshan - Weather Report',
+			`Generated At: ${timestamp.toLocaleString()}`,
+			`Location: ${safeLocation}`,
+			'',
+			'Current Conditions',
+			`Temperature: ${displayWeatherData.current?.temperature_c ?? '--'}°C`,
+			`Summary: ${displayWeatherData.current?.summary || '--'}`,
+			`Sky: ${displayWeatherData.current?.sky_label || '--'}`,
+			`Reported Time: ${displayedTimestamp}`,
+			'',
+			'Stats',
+			...((displayWeatherData.stats || []).map((item) => `${item.title}: ${item.value} (${item.label})`)),
+			'',
+			'7-Day Forecast',
+			...((weeklyWithIcons || []).map((day) => `${day.day}: ${day.condition}, High ${day.high}, Low ${day.low}`)),
+		]
+
+		const reportBlob = new Blob([reportLines.join('\n')], { type: 'text/plain;charset=utf-8' })
+		const downloadUrl = window.URL.createObjectURL(reportBlob)
+		const anchor = document.createElement('a')
+		anchor.href = downloadUrl
+		anchor.download = `weather-report-${sanitizeFilePart(safeLocation)}-${timestamp.toISOString().slice(0, 10)}.txt`
+		document.body.appendChild(anchor)
+		anchor.click()
+		document.body.removeChild(anchor)
+		window.URL.revokeObjectURL(downloadUrl)
+	}
+
+	const weeklyWithIcons = (displayWeatherData.weekly || weeklyForecast).map((item) => ({
+		...item,
+		icon: weatherIcons[item.condition] || dayPartlyIcon,
+	}))
 
 	return (
 		<div className="weather-page">
@@ -134,7 +206,7 @@ function WeatherForecast() {
 				<section className="weather-topbar" data-node-id="2:4">
 					<div>
 						<h2>{t('weather.title')}</h2>
-						<p>{t('weather.description', { location: weatherData.location || activeLocation })}</p>
+						<p>{t('weather.description', { location: displayWeatherData.location || activeLocation })}</p>
 					</div>
 					<form className="weather-location-controls" onSubmit={handleSubmit}>
 						<label className="weather-location-input" htmlFor="weather-location">
@@ -143,7 +215,7 @@ function WeatherForecast() {
 								id="weather-location"
 								value={locationInput}
 								onChange={(event) => setLocationInput(event.target.value)}
-								placeholder={t('weather.locationPlaceholder')}
+								placeholder={defaultLocation || t('weather.locationPlaceholder')}
 							/>
 						</label>
 						<button type="submit" className="weather-detect-btn">
@@ -160,19 +232,19 @@ function WeatherForecast() {
 						<div className="weather-main-content">
 							<span className="weather-live-pill">{t('weather.rightNow')}</span>
 							<div className="weather-temp-row">
-								<strong>{weatherData.current.temperature_c}</strong>
+								<strong>{displayWeatherData.current.temperature_c}</strong>
 								<span>°C</span>
 							</div>
-							<p>{weatherData.current.summary} • {weatherData.current.timestamp}</p>
+							<p>{displayWeatherData.current.summary} • {displayedTimestamp}</p>
 						</div>
 						<div className="weather-cloud-box">
 							<img src={cloudIcon} alt="" aria-hidden="true" />
-							<span>{weatherData.current.sky_label}</span>
+							<span>{displayWeatherData.current.sky_label}</span>
 						</div>
 					</article>
 
 					<div className="weather-side-stats">
-						{(weatherData.stats || sideStats).map((item) => (
+						{(displayWeatherData.stats || sideStats).map((item) => (
 							<article className="weather-stat-card" key={item.title}>
 								<div className="weather-stat-head">
 									<img src={item.icon} alt="" aria-hidden="true" />
@@ -204,7 +276,7 @@ function WeatherForecast() {
 					<div className="weather-forecast-head">
 							<h3>{t('weather.forecast7Day')}</h3>
 						<div className="weather-forecast-divider" />
-							<button type="button">{t('weather.downloadReport')}</button>
+							<button type="button" onClick={handleDownloadReport}>{t('weather.downloadReport')}</button>
 					</div>
 					<div className="weather-forecast-cards">
 						{weeklyWithIcons.map((day) => (
@@ -226,10 +298,10 @@ function WeatherForecast() {
 						<img src={guideImage} alt="Farmer in field" className="weather-guide-image" />
 					</div>
 					<div className="weather-guide-copy">
-						<h3>{weatherData.guide?.title || t('weather.weatherGuideTitle')}</h3>
-						<p>{weatherData.guide?.body}</p>
+						<h3>{displayWeatherData.guide?.title || t('weather.weatherGuideTitle')}</h3>
+						<p>{displayWeatherData.guide?.body}</p>
 						<div className="weather-guide-tags">
-							{(weatherData.guide?.tags || []).map((tag) => (
+							{(displayWeatherData.guide?.tags || []).map((tag) => (
 								<span key={tag}>{tag}</span>
 							))}
 						</div>

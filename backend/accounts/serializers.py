@@ -2,16 +2,18 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import UserProfile
+from .models import AdminActionLog, UserProfile
 
 
 User = get_user_model()
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    profile_photo = serializers.ImageField(required=False, allow_null=True)
+
     class Meta:
         model = UserProfile
-        fields = ("full_name", "location", "crop_type", "phone")
+        fields = ("full_name", "location", "crop_type", "phone", "profile_photo")
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -19,11 +21,44 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "email", "username", "provider", "profile_completed", "profile")
+        fields = (
+            "id",
+            "email",
+            "username",
+            "provider",
+            "profile_completed",
+            "is_staff",
+            "is_superuser",
+            "profile",
+        )
 
     def get_profile(self, obj):
         profile, _ = UserProfile.objects.get_or_create(user=obj)
-        return UserProfileSerializer(profile).data
+        return UserProfileSerializer(profile, context=self.context).data
+
+
+class ProfilePhotoUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ("profile_photo",)
+
+
+class AdminActionLogSerializer(serializers.ModelSerializer):
+    actor_email = serializers.CharField(source="actor.email", read_only=True)
+
+    class Meta:
+        model = AdminActionLog
+        fields = (
+            "id",
+            "actor_email",
+            "action",
+            "target_type",
+            "target_label",
+            "target_id",
+            "summary",
+            "metadata",
+            "created_at",
+        )
 
 
 class RegisterSerializer(serializers.Serializer):

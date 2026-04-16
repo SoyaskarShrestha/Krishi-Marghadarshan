@@ -170,6 +170,10 @@
   height: 12px;
 }
 
+.member-avatar-file-input {
+  display: none;
+}
+
 .member-profile-copy h2 {
   margin: 8px 0 0;
   color: #2a2b27;
@@ -214,6 +218,18 @@
   gap: 10px;
   margin-top: 18px;
   flex-wrap: wrap;
+}
+
+.member-profile-edit-button {
+  margin-top: 14px;
+  border: 0;
+  border-radius: 999px;
+  background: #184a1c;
+  color: #fff;
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .member-tag {
@@ -298,6 +314,13 @@
   margin: 8px 0 0;
   color: #5a5f59;
   line-height: 1.45;
+}
+
+.member-history-meta {
+  display: block;
+  margin-top: 8px;
+  color: #7b8078;
+  font-size: 0.82rem;
 }
 
 .member-history-copy a {
@@ -441,6 +464,11 @@
   text-overflow: ellipsis;
 }
 
+.member-saved-empty {
+  color: #5a5f59;
+  font-size: 0.9rem;
+}
+
 .member-plain-card small {
   color: #7b8078;
   font-size: 0.88rem;
@@ -450,6 +478,74 @@
   margin-top: 10px;
   color: #184a1c;
   font-size: 1.25rem;
+}
+
+.member-link-card {
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.member-link-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(59, 55, 45, 0.1);
+}
+
+.member-consultation-meta {
+  margin: 8px 0 0;
+  color: #5a5f59;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-link-hint {
+  display: inline-flex;
+  margin-top: 14px;
+  color: #184a1c;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.member-meta-icon {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.member-meta-icon.rain { background: #5496ff; }
+.member-meta-icon.temp { background: #ff9558; }
+.member-meta-icon.note { background: #58a05b; }
+.member-meta-icon.pending { background: #d5a029; }
+.member-meta-icon.answered { background: #4b9d57; }
+
+.member-weather-risk {
+  display: inline-flex;
+  margin-top: 10px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.member-weather-risk.low {
+  background: #d8f2d8;
+  color: #1f5f23;
+}
+
+.member-weather-risk.moderate {
+  background: #fff1ce;
+  color: #735617;
+}
+
+.member-weather-risk.high {
+  background: #ffe0dc;
+  color: #9e2f20;
 }
 
 .member-logout-section {
@@ -648,5 +744,23 @@
   .member-dashboard-top,
   .member-dashboard-bottom {
     grid-template-columns: 1fr;
+  }
+
+  .member-profile-edit-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .member-history-card {
+    padding: 22px 20px;
+  }
+
+  .member-history-copy h3 {
+    font-size: 1.1rem;
+  }
+
+  .member-history-copy a {
+    flex-wrap: wrap;
+    row-gap: 4px;
   }
 }

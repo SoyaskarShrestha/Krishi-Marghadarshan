@@ -1,8 +1,8 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import './Cart.css'
-import NavBar from './NavBar'
-import { API_ENDPOINTS, apiRequest } from '../lib/api'
+import NavBar from '../layout/NavBar'
+import { API_ENDPOINTS, apiRequest } from '../../lib/api'
 import { useTranslation } from 'react-i18next'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
@@ -124,25 +124,51 @@ function Cart() {
 	const total = subtotal + deliveryFee + serviceFee
 
 	const syncQuantity = async (itemId, nextQuantity) => {
-		if (typeof itemId !== 'number') {
+		if (itemId === null || itemId === undefined || itemId === '') {
 			return
 		}
+
+		const normalizedQuantity = Math.max(1, Number(nextQuantity) || 1)
+		const existingItem = cartItems.find((item) => String(item.id) === String(itemId))
+		if (!existingItem) {
+			return
+		}
+
+		const previousQuantity = Number(existingItem.quantity) || 1
+		setCartItems((current) =>
+			current.map((item) =>
+				String(item.id) === String(itemId)
+					? { ...item, quantity: normalizedQuantity }
+					: item
+			)
+		)
 
 		try {
 			const payload = await apiRequest(`${API_ENDPOINTS.SHOP_CART}${itemId}/`, {
 				method: 'PATCH',
-				body: JSON.stringify({ quantity: Math.max(1, nextQuantity) }),
+				body: JSON.stringify({ quantity: normalizedQuantity }),
 			})
 			setCartItems((current) =>
-				current.map((item) => (item.id === itemId ? { ...item, quantity: payload.quantity } : item))
+				current.map((item) =>
+					String(item.id) === String(itemId)
+						? { ...item, quantity: Number(payload.quantity) || normalizedQuantity }
+						: item
+				)
 			)
 		} catch (error) {
+			setCartItems((current) =>
+				current.map((item) =>
+					String(item.id) === String(itemId)
+						? { ...item, quantity: previousQuantity }
+						: item
+				)
+			)
 			setCartError(error.message)
 		}
 	}
 
 	const removeItem = async (itemId) => {
-		if (typeof itemId !== 'number') {
+		if (itemId === null || itemId === undefined || itemId === '') {
 			return
 		}
 
@@ -259,12 +285,14 @@ function Cart() {
 							</div>
 						</div>
 
-						<button type="button" className="cart-checkout-button">
-							{t('cart.proceedToCheckout')}
-						</button>
-						<Link to="/shop" className="cart-secondary-button">
-							{t('cart.continueShopping')}
-						</Link>
+						<div className="cart-summary-actions">
+							<button type="button" className="cart-checkout-button">
+								{t('cart.proceedToCheckout')}
+							</button>
+							<Link to="/shop" className="cart-secondary-button">
+								{t('cart.continueShopping')}
+							</Link>
+						</div>
 					</aside>
 				</section>
 			</main>

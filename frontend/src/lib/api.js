@@ -8,8 +8,12 @@ export const API_ENDPOINTS = {
 	AUTH_LOGIN: import.meta.env.VITE_API_AUTH_LOGIN || '/auth/login/',
 	AUTH_OAUTH: import.meta.env.VITE_API_AUTH_OAUTH || '/auth/oauth/',
 	AUTH_ME: import.meta.env.VITE_API_AUTH_ME || '/auth/me/',
+	AUTH_CONSULTATION_SUMMARY: import.meta.env.VITE_API_AUTH_CONSULTATION_SUMMARY || '/auth/consultation-summary/',
 	AUTH_PROFILE: import.meta.env.VITE_API_AUTH_PROFILE || '/auth/profile/',
+	AUTH_PROFILE_PHOTO: import.meta.env.VITE_API_AUTH_PROFILE_PHOTO || '/auth/profile/photo/',
+	AUTH_ADMIN_ACTIVITY: import.meta.env.VITE_API_AUTH_ADMIN_ACTIVITY || '/auth/admin-activity/',
 	ARTICLES: import.meta.env.VITE_API_ARTICLES || '/articles/',
+	ARTICLES_SAVED: import.meta.env.VITE_API_ARTICLES_SAVED || '/articles/saved/',
 	SHOP_PRODUCTS: import.meta.env.VITE_API_SHOP_PRODUCTS || '/shop/products/',
 	SHOP_CART: import.meta.env.VITE_API_SHOP_CART || '/shop/cart/',
 	ADVISORY_META: import.meta.env.VITE_API_ADVISORY_META || '/advisory/meta/',
@@ -40,7 +44,7 @@ export async function apiRequest(path, options = {}) {
 	const token = getAccessToken()
 	const headers = new Headers(options.headers || {})
 
-	if (!headers.has('Content-Type') && options.body) {
+	if (!headers.has('Content-Type') && options.body && !(options.body instanceof FormData)) {
 		headers.set('Content-Type', 'application/json')
 	}
 

@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 
-function ProtectedRoute({ children }) {
+function AdminRoute({ children }) {
 	const { isAuthReady, isAuthenticated, currentUser, isProfileComplete } = useAuth()
 	const location = useLocation()
 
@@ -17,7 +17,11 @@ function ProtectedRoute({ children }) {
 		return <Navigate to="/complete-profile" replace state={{ email: currentUser?.email }} />
 	}
 
+	if (!currentUser?.isAdmin) {
+		return <Navigate to="/" replace />
+	}
+
 	return children
 }
 
-export default ProtectedRoute
+export default AdminRoute

@@ -86,11 +86,29 @@
   font-family: inherit;
   font-size: 1rem;
   font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  box-shadow: 0 6px 14px rgba(121, 92, 81, 0.18);
 }
 
 .weather-detect-btn img {
   width: 22px;
   height: 22px;
+}
+
+.weather-detect-btn:hover {
+  background: #f9c8b5;
+  box-shadow: 0 9px 18px rgba(121, 92, 81, 0.22);
+}
+
+.weather-detect-btn:active {
+  transform: translateY(1px) scale(0.985);
+  box-shadow: 0 3px 8px rgba(121, 92, 81, 0.2);
+}
+
+.weather-detect-btn:focus-visible {
+  outline: 3px solid rgba(21, 66, 18, 0.35);
+  outline-offset: 2px;
 }
 
 .weather-hero-grid {
@@ -300,11 +318,33 @@
 }
 
 .weather-forecast-head button {
-  border: 0;
-  background: transparent;
+  border: 1px solid rgba(21, 66, 18, 0.2);
+  border-radius: 999px;
+  background: #eef4ef;
   color: #154212;
   font: inherit;
   font-weight: 700;
+  min-height: 42px;
+  padding: 0 1rem;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+  box-shadow: 0 3px 8px rgba(21, 66, 18, 0.08);
+}
+
+.weather-forecast-head button:hover {
+  background: #e4eee4;
+  border-color: rgba(21, 66, 18, 0.3);
+  box-shadow: 0 8px 16px rgba(21, 66, 18, 0.12);
+}
+
+.weather-forecast-head button:active {
+  transform: translateY(1px) scale(0.985);
+  box-shadow: 0 2px 6px rgba(21, 66, 18, 0.12);
+}
+
+.weather-forecast-head button:focus-visible {
+  outline: 3px solid rgba(21, 66, 18, 0.35);
+  outline-offset: 2px;
 }
 
 .weather-forecast-cards {
@@ -555,6 +595,12 @@
   .weather-forecast-head {
     align-items: flex-start;
     flex-wrap: wrap;
+  }
+
+  .weather-forecast-head button {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
   }
 
   .weather-forecast-divider {

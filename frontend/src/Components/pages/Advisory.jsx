@@ -1,21 +1,23 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import './Advisory.css'
-import NavBar from './NavBar'
-import Footer from './Footer'
-import { API_ENDPOINTS, apiRequest } from '../lib/api'
-import heroImage from '../assets/advisory/hero.png'
-import floatingIcon from '../assets/advisory/icon-floating.svg'
-import benefitIcon from '../assets/advisory/icon-benefit.svg'
-import chevronIcon from '../assets/advisory/icon-chevron.svg'
-import arrowIcon from '../assets/advisory/icon-arrow.svg'
-import supportPhoneIcon from '../assets/advisory/icon-support-phone.svg'
-import supportPinIcon from '../assets/advisory/icon-support-pin.svg'
-import { useLanguage } from '../context/LanguageContext'
+import NavBar from '../layout/NavBar'
+import Footer from '../layout/Footer'
+import { API_ENDPOINTS, apiRequest } from '../../lib/api'
+import heroImage from '../../assets/advisory/hero.png'
+import floatingIcon from '../../assets/advisory/icon-floating.svg'
+import benefitIcon from '../../assets/advisory/icon-benefit.svg'
+import chevronIcon from '../../assets/advisory/icon-chevron.svg'
+import arrowIcon from '../../assets/advisory/icon-arrow.svg'
+import supportPhoneIcon from '../../assets/advisory/icon-support-phone.svg'
+import supportPinIcon from '../../assets/advisory/icon-support-pin.svg'
+import { useLanguage } from '../../context/LanguageContext'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../context/AuthContext'
 
 function Advisory() {
 	const { isNepali } = useLanguage()
 	const { t } = useTranslation()
+	const { currentUser, isAuthReady } = useAuth()
 	const [formState, setFormState] = useState({
 		fullName: '',
 		category: '',
@@ -24,6 +26,9 @@ function Advisory() {
 	const [submitMessage, setSubmitMessage] = useState('')
 	const [submitError, setSubmitError] = useState('')
 	const [meta, setMeta] = useState(null)
+	const [myQuestions, setMyQuestions] = useState([])
+	const [isMyQuestionsLoading, setIsMyQuestionsLoading] = useState(false)
+	const [myQuestionsError, setMyQuestionsError] = useState('')
 
 	const content = {
 		heroPill: t('advisory.heroPill'),
@@ -42,6 +47,16 @@ function Advisory() {
 		question: t('advisory.question'),
 		questionPlaceholder: t('advisory.questionPlaceholder'),
 		send: t('advisory.send'),
+		myQuestionsTitle: t('advisory.myQuestionsTitle'),
+		myQuestionsBody: t('advisory.myQuestionsBody'),
+		checkingAccount: t('advisory.checkingAccount'),
+		signInToViewHistory: t('advisory.signInToViewHistory'),
+		loadingMyQuestions: t('advisory.loadingMyQuestions'),
+		unableToLoadMyQuestions: t('advisory.unableToLoadMyQuestions'),
+		noMyQuestions: t('advisory.noMyQuestions'),
+		advisorReplyLabel: t('advisory.advisorReplyLabel'),
+		advisorFallbackName: t('advisory.advisorFallbackName'),
+		waitingForAdvisorResponse: t('advisory.waitingForAdvisorResponse'),
 		faqTitle: t('advisory.faqTitle'),
 		faqs: t('advisory.faqs', { returnObjects: true }),
 		supportTitle: t('advisory.supportTitle'),
@@ -82,13 +97,52 @@ function Advisory() {
 		}
 	}, [])
 
+	useEffect(() => {
+		let ignore = false
+
+		async function loadMyQuestions() {
+			if (!isAuthReady || !currentUser) {
+				if (!ignore) {
+					setMyQuestions([])
+					setMyQuestionsError('')
+				}
+				return
+			}
+
+			setIsMyQuestionsLoading(true)
+			setMyQuestionsError('')
+
+			try {
+				const payload = await apiRequest(`${API_ENDPOINTS.ADVISORY_QUESTIONS}?mine=1`)
+				if (!ignore) {
+					setMyQuestions(Array.isArray(payload) ? payload : [])
+				}
+			} catch (error) {
+				if (!ignore) {
+					setMyQuestions([])
+					setMyQuestionsError(error.message || content.unableToLoadMyQuestions)
+				}
+			} finally {
+				if (!ignore) {
+					setIsMyQuestionsLoading(false)
+				}
+			}
+		}
+
+		loadMyQuestions()
+
+		return () => {
+			ignore = true
+		}
+	}, [content.unableToLoadMyQuestions, currentUser, isAuthReady])
+
 	const availableCategories = useMemo(() => {
 		const list = meta?.categories?.[languageKey]
 		if (Array.isArray(list) && list.length > 0) {
 			return list
 		}
 		return [content.categoryDefault, t('advisory.soilTesting'), t('advisory.livestock')]
-	}, [content.categoryDefault, isNepali, languageKey, meta])
+	}, [content.categoryDefault, languageKey, meta, t])
 
 	const faqs = useMemo(() => {
 		const list = meta?.faqs?.[languageKey]
@@ -125,6 +179,9 @@ function Advisory() {
 
 			setSubmitMessage(payload.message)
 			setFormState((previous) => ({ ...previous, question: '' }))
+			if (payload.question) {
+				setMyQuestions((previous) => [payload.question, ...previous])
+			}
 		} catch (error) {
 			setSubmitError(error.message)
 		}
@@ -217,6 +274,50 @@ function Advisory() {
 							<span className="advisory-submit-icon"><img src={arrowIcon} alt="" aria-hidden="true" /></span>
 						</button>
 					</form>
+				</section>
+
+				<section className="advisory-my-questions-section">
+					<div className="advisory-my-questions-section-head">
+						<h3>{content.myQuestionsTitle}</h3>
+						<p>{content.myQuestionsBody}</p>
+					</div>
+
+					<div className="advisory-my-questions-card">
+						{!isAuthReady ? <p className="advisory-my-questions-note">{content.checkingAccount}</p> : null}
+						{isAuthReady && !currentUser ? <p className="advisory-my-questions-note">{content.signInToViewHistory}</p> : null}
+						{isMyQuestionsLoading ? <p className="advisory-my-questions-note">{content.loadingMyQuestions}</p> : null}
+						{myQuestionsError ? <p className="advisory-my-questions-error">{myQuestionsError}</p> : null}
+
+						{isAuthReady && currentUser && !isMyQuestionsLoading && !myQuestionsError && myQuestions.length === 0 ? (
+							<p className="advisory-my-questions-note">{content.noMyQuestions}</p>
+						) : null}
+
+						<div className="advisory-my-questions-list">
+							{myQuestions.map((item) => (
+								<article key={item.id} className="advisory-my-question-item">
+									<div className="advisory-my-question-meta">
+										<span className={`advisory-my-question-status ${item.status}`}>{item.status}</span>
+										<small>{new Date(item.created_at).toLocaleString()}</small>
+									</div>
+									<p className="advisory-my-question-category">{item.category}</p>
+									<p className="advisory-my-question-text">{item.question}</p>
+
+									{item.advisor_reply ? (
+										<div className="advisory-my-question-reply">
+											<strong>{content.advisorReplyLabel}</strong>
+											<p>{item.advisor_reply}</p>
+											<small>
+												{item.advisor_name || content.advisorFallbackName}
+												{item.replied_at ? ` • ${new Date(item.replied_at).toLocaleString()}` : ''}
+											</small>
+										</div>
+									) : (
+										<p className="advisory-my-question-pending">{content.waitingForAdvisorResponse}</p>
+									)}
+								</article>
+							))}
+						</div>
+					</div>
 				</section>
 
 				<section className="advisory-faq-section">
