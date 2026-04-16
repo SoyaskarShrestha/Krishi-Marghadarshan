@@ -1,21 +1,22 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import './WeatherForecast.css'
-import NavBar from './NavBar'
-import Footer from './Footer'
-import { API_ENDPOINTS, apiRequest } from '../lib/api'
-import { useAuth } from '../context/AuthContext'
+import NavBar from '../layout/NavBar'
+import Footer from '../layout/Footer'
+import { API_ENDPOINTS, apiRequest } from '../../lib/api'
+import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from 'react-i18next'
-import autoDetectIcon from '../assets/weather/icons/auto-detect.svg'
-import cloudIcon from '../assets/weather/icons/cloud.svg'
-import dayCloudyIcon from '../assets/weather/icons/day-cloudy.svg'
-import dayPartlyIcon from '../assets/weather/icons/day-partly.svg'
-import dayRainyIcon from '../assets/weather/icons/day-rainy.svg'
-import daySunnyIcon from '../assets/weather/icons/day-sunny.svg'
-import guideImage from '../assets/weather/guide-figma.jpg'
-import heroImage from '../assets/weather/hero-figma.jpg'
-import humidityBadgeIcon from '../assets/weather/icons/humidity-badge.svg'
-import locationIcon from '../assets/weather/icons/location.svg'
-import rainBadgeIcon from '../assets/weather/icons/rain-badge.svg'
+import autoDetectIcon from '../../assets/weather/icons/auto-detect.svg'
+import cloudIcon from '../../assets/weather/icons/cloud.svg'
+import dayCloudyIcon from '../../assets/weather/icons/day-cloudy.svg'
+import dayPartlyIcon from '../../assets/weather/icons/day-partly.svg'
+import dayRainyIcon from '../../assets/weather/icons/day-rainy.svg'
+import daySunnyIcon from '../../assets/weather/icons/day-sunny.svg'
+import guideImage from '../../assets/weather/guide-figma.jpg'
+import heroImage from '../../assets/weather/hero-figma.jpg'
+import humidityBadgeIcon from '../../assets/weather/icons/humidity-badge.svg'
+import locationIcon from '../../assets/weather/icons/location.svg'
+import rainBadgeIcon from '../../assets/weather/icons/rain-badge.svg'
 
 const weatherIcons = {
 	SUNNY: daySunnyIcon,
@@ -47,11 +48,13 @@ function sanitizeFilePart(value) {
 function WeatherForecast() {
 	const { t } = useTranslation()
 	const { currentUser } = useAuth()
+	const [searchParams] = useSearchParams()
+	const queryLocation = (searchParams.get('location') || '').trim()
 	const [locationInput, setLocationInput] = useState('')
 	const [activeLocationOverride, setActiveLocationOverride] = useState('')
 	const profileLocation = currentUser?.profile?.location?.trim() || ''
 	const defaultLocation = profileLocation || 'Pokhara'
-	const activeLocation = activeLocationOverride || defaultLocation
+	const activeLocation = activeLocationOverride || queryLocation || defaultLocation
 	const sideStats = useMemo(
 		() => [
 			{

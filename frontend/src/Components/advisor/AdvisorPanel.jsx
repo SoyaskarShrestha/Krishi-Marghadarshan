@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import NavBar from './NavBar'
+import NavBar from '../layout/NavBar'
 import './AdvisorPanel.css'
-import { API_ENDPOINTS, apiRequest } from '../lib/api'
-import { useAuth } from '../context/AuthContext'
+import { API_ENDPOINTS, apiRequest } from '../../lib/api'
+import { useAuth } from '../../context/AuthContext'
 
 const statusFilters = [
 	{ label: 'All', value: 'all' },

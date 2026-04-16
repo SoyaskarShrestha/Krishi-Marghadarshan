@@ -80,7 +80,7 @@ class AdvisoryQuestionCreateView(mixins.CreateModelMixin, generics.GenericAPIVie
 
     def get_permissions(self):
         if self.request.method == "GET":
-            return [permissions.IsAuthenticated(), IsAdvisorOrAdmin()]
+            return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
     def post(self, request, *args, **kwargs):
@@ -97,6 +97,15 @@ class AdvisoryQuestionCreateView(mixins.CreateModelMixin, generics.GenericAPIVie
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by("-created_at")
+        is_advisor_or_admin = bool(request.user and (request.user.is_staff or request.user.is_superuser))
+
+        if not is_advisor_or_admin:
+            queryset = queryset.filter(user=request.user)
+
+        mine_filter = (request.query_params.get("mine") or "").strip().lower()
+        if mine_filter in {"1", "true", "yes"}:
+            queryset = queryset.filter(user=request.user)
+
         status_filter = (request.query_params.get("status") or "").strip().lower()
         if status_filter in {AdvisoryQuestion.STATUS_PENDING, AdvisoryQuestion.STATUS_ANSWERED}:
             queryset = queryset.filter(status=status_filter)

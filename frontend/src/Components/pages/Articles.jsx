@@ -1,19 +1,20 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import './Articles.css'
-import NavBar from './NavBar'
-import Footer from './Footer'
-import { API_ENDPOINTS, apiRequest } from '../lib/api'
+import NavBar from '../layout/NavBar'
+import Footer from '../layout/Footer'
+import { API_ENDPOINTS, apiRequest } from '../../lib/api'
+import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from 'react-i18next'
-import riceFieldsImage from '../assets/articles/rice-fields.jpg'
-import soilHealthImage from '../assets/articles/soil-health.jpg'
-import pestManagementImage from '../assets/articles/pest-management.jpg'
-import marketGuideImage from '../assets/articles/market-guide.jpg'
-import searchIcon from '../assets/articles/icons/search.svg'
-import filterIcon from '../assets/articles/icons/filter.svg'
-import arrowRightIcon from '../assets/articles/icons/arrow-right.svg'
-import bookmarkIcon from '../assets/articles/icons/bookmark.svg'
-import dropdownIcon from '../assets/articles/icons/dropdown.svg'
+import riceFieldsImage from '../../assets/articles/rice-fields.jpg'
+import soilHealthImage from '../../assets/articles/soil-health.jpg'
+import pestManagementImage from '../../assets/articles/pest-management.jpg'
+import marketGuideImage from '../../assets/articles/market-guide.jpg'
+import searchIcon from '../../assets/articles/icons/search.svg'
+import filterIcon from '../../assets/articles/icons/filter.svg'
+import arrowRightIcon from '../../assets/articles/icons/arrow-right.svg'
+import bookmarkIcon from '../../assets/articles/icons/bookmark.svg'
+import dropdownIcon from '../../assets/articles/icons/dropdown.svg'
 
 const cardImages = [riceFieldsImage, soilHealthImage, pestManagementImage, marketGuideImage]
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
@@ -35,8 +36,16 @@ function resolveArticleImage(photo, index) {
 	return cardImages[index % cardImages.length]
 }
 
+function normalizeArticleId(value) {
+	if (value === null || value === undefined || value === '') {
+		return ''
+	}
+	return String(value)
+}
+
 function Articles() {
 	const { t } = useTranslation()
+	const { isAuthenticated, isAuthReady } = useAuth()
 	const categoryTabs = t('articles.categories', { returnObjects: true })
 	const fallbackCards = useMemo(
 		() =>
@@ -54,12 +63,55 @@ function Articles() {
 	const [searchTerm, setSearchTerm] = useState('')
 	const [activeCategory, setActiveCategory] = useState('')
 	const [language, setLanguage] = useState('all')
+	const [savedArticleIds, setSavedArticleIds] = useState(new Set())
+	const [saveFeedback, setSaveFeedback] = useState('')
+	const isSavedArticle = (articleId) => savedArticleIds.has(normalizeArticleId(articleId))
 
 	useEffect(() => {
 		if (isUsingFallbackCards) {
 			setCards(fallbackCards)
 		}
 	}, [fallbackCards, isUsingFallbackCards])
+
+	useEffect(() => {
+		if (!isAuthReady) {
+			return
+		}
+
+		if (!isAuthenticated) {
+			setSavedArticleIds(new Set())
+			return
+		}
+
+		let ignore = false
+
+		async function loadSavedArticles() {
+			try {
+				const payload = await apiRequest(API_ENDPOINTS.ARTICLES_SAVED)
+				if (!Array.isArray(payload) || ignore) {
+					return
+				}
+
+				setSavedArticleIds(
+					new Set(
+						payload
+							.map((item) => normalizeArticleId(item.article?.id))
+							.filter(Boolean)
+					)
+				)
+			} catch {
+				if (!ignore) {
+					setSavedArticleIds(new Set())
+				}
+			}
+		}
+
+		loadSavedArticles()
+
+		return () => {
+			ignore = true
+		}
+	}, [isAuthenticated, isAuthReady])
 
 	useEffect(() => {
 		let ignore = false
@@ -119,8 +171,46 @@ function Articles() {
 		}
 	}, [searchTerm, activeCategory, language, t])
 
+	const toggleSaved = async (article) => {
+		const normalizedArticleId = normalizeArticleId(article?.id)
+		if (!normalizedArticleId) {
+			setSaveFeedback('Only published backend articles can be saved.')
+			return
+		}
+
+		if (!isAuthenticated) {
+			setSaveFeedback('Please login to save articles.')
+			return
+		}
+
+		const articleId = article.id
+		const alreadySaved = isSavedArticle(articleId)
+
+		try {
+			if (alreadySaved) {
+				await apiRequest(`${API_ENDPOINTS.ARTICLES_SAVED}${articleId}/`, { method: 'DELETE' })
+				setSavedArticleIds((current) => {
+					const next = new Set(current)
+					next.delete(normalizedArticleId)
+					return next
+				})
+				setSaveFeedback('Article removed from saved list.')
+			} else {
+				await apiRequest(API_ENDPOINTS.ARTICLES_SAVED, {
+					method: 'POST',
+					body: JSON.stringify({ article_id: articleId }),
+				})
+				setSavedArticleIds((current) => new Set(current).add(normalizedArticleId))
+				setSaveFeedback('Article saved successfully.')
+			}
+		} catch (error) {
+			setSaveFeedback(error.message || 'Unable to update saved articles.')
+		}
+	}
+
 	const featuredCard = useMemo(() => cards.find((card) => card.featured) || cards[0], [cards])
 	const miniCards = useMemo(() => cards.filter((card) => card !== featuredCard), [cards, featuredCard])
+	const getSaveLabel = (isSaved) => (isSaved ? 'Saved' : 'Save')
 
 	return (
 		<div className="articles-page" data-node-id="2:812">
@@ -184,6 +274,7 @@ function Articles() {
 				</section>
 
 				{articlesError ? <p className="articles-shell">{articlesError}</p> : null}
+				{saveFeedback ? <p className="articles-shell articles-save-feedback">{saveFeedback}</p> : null}
 				{isLoading ? <p className="articles-shell">{t('articles.loading')}</p> : null}
 				{!isLoading && cards.length === 0 ? <p className="articles-shell">{t('articles.emptyState')}</p> : null}
 
@@ -204,10 +295,21 @@ function Articles() {
 									{featuredCard.titleNepali ? <span className="articles-featured-nepali">({featuredCard.titleNepali})</span> : null}
 								</h3>
 								<p>{featuredCard.description}</p>
-								<Link to="/articles" className="articles-read-link">
-									<span>{t('articles.readFullArticle')}</span>
-									<img src={arrowRightIcon} alt="" aria-hidden="true" />
-								</Link>
+								<div className="articles-featured-actions">
+									<Link to="/articles" className="articles-read-link">
+										<span>{t('articles.readFullArticle')}</span>
+										<img src={arrowRightIcon} alt="" aria-hidden="true" />
+									</Link>
+									<button
+										type="button"
+										className={`articles-bookmark-btn articles-bookmark-pill ${isSavedArticle(featuredCard.id) ? 'saved' : ''}`}
+										aria-label={isSavedArticle(featuredCard.id) ? 'Remove from saved' : t('articles.bookmarkAria')}
+										onClick={() => toggleSaved(featuredCard)}
+									>
+										<img src={bookmarkIcon} alt="" aria-hidden="true" />
+										<span>{getSaveLabel(isSavedArticle(featuredCard.id))}</span>
+									</button>
+								</div>
 							</div>
 						</article>
 					) : null}
@@ -221,8 +323,14 @@ function Articles() {
 								<p>{card.description}</p>
 								<div className="articles-card-footer">
 									<span>{card.readTime}</span>
-									<button type="button" className="articles-bookmark-btn" aria-label={t('articles.bookmarkAria')}>
-										<img src={bookmarkIcon} alt="" aria-hidden="true" />
+										<button
+											type="button"
+											className={`articles-bookmark-btn articles-bookmark-pill ${isSavedArticle(card.id) ? 'saved' : ''}`}
+											aria-label={isSavedArticle(card.id) ? 'Remove from saved' : t('articles.bookmarkAria')}
+											onClick={() => toggleSaved(card)}
+										>
+											<img src={bookmarkIcon} alt="" aria-hidden="true" />
+											<span>{getSaveLabel(isSavedArticle(card.id))}</span>
 									</button>
 								</div>
 							</div>

@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 
-function AdminRoute({ children }) {
+function AdvisorRoute({ children }) {
 	const { isAuthReady, isAuthenticated, currentUser, isProfileComplete } = useAuth()
 	const location = useLocation()
 
@@ -17,11 +17,11 @@ function AdminRoute({ children }) {
 		return <Navigate to="/complete-profile" replace state={{ email: currentUser?.email }} />
 	}
 
-	if (!currentUser?.isAdmin) {
+	if (!currentUser?.isAdvisor) {
 		return <Navigate to="/" replace />
 	}
 
 	return children
 }
 
-export default AdminRoute
+export default AdvisorRoute
