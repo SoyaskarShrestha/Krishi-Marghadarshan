@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "advisory",
     "weather",
     "cart",
+    "soil",
 ]
 
 MIDDLEWARE = [

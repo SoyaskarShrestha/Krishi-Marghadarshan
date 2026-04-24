@@ -12,6 +12,7 @@ urlpatterns = [
     path("api/advisory/", include("advisory.urls")),
     path("api/weather/", include("weather.urls")),
     path("api/cart/", include("cart.urls")),
+    path("api/soil/", include("soil.urls")),
 ]
 
 if settings.DEBUG:
