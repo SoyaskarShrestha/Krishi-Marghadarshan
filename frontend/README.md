@@ -20,7 +20,7 @@ If you are developing a production application, we recommend using TypeScript wi
 
 This frontend can talk to the Django REST backend in `backend/`.
 
-1. Set `VITE_API_URL` in `.env`.
+1. Set `VITE_API_URL` in the repository root `.env` file.
 2. Start the backend from `backend/`.
 3. Start the frontend with `npm run dev`.
 
@@ -34,7 +34,7 @@ This project now uses real Firebase Authentication for the OAuth buttons on sign
 	- Google
 	- GitHub (add your GitHub OAuth app Client ID and Secret)
 4. Add your app domain to Firebase authorized domains (for local dev this is usually `localhost`).
-5. Copy `.env.example` to `.env` and fill in all `VITE_FIREBASE_*` values.
+5. Fill in all `VITE_FIREBASE_*` values in the repository root `.env` file.
 6. Restart the Vite dev server after changing `.env`.
 
 Without these environment values, OAuth buttons will show a configuration error message.
