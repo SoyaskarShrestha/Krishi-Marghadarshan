@@ -61,7 +61,7 @@ class GeminiChatView(APIView):
         api_key = os.getenv("GEMINI_API_KEY", "").strip()
         if not api_key:
             return Response(
-                {"detail": "Gemini API key is missing. Set GEMINI_API_KEY in backend/.env."},
+                {"detail": "Gemini API key is missing. Set GEMINI_API_KEY in backend/.env or project-root .env."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
