@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
 	ADVISORY_META: import.meta.env.VITE_API_ADVISORY_META || '/advisory/meta/',
 	ADVISORY_QUESTIONS: import.meta.env.VITE_API_ADVISORY_QUESTIONS || '/advisory/questions/',
 	WEATHER_FORECAST: import.meta.env.VITE_API_WEATHER_FORECAST || '/weather/forecast/',
+	CHATBOT_MESSAGE: import.meta.env.VITE_API_CHATBOT_MESSAGE || '/chatbot/message/',
 }
 
 export function getAccessToken() {

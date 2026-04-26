@@ -84,6 +84,12 @@
   padding-bottom: 8px;
 }
 
+.navbar-chatbot-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
 .navbar-nav a.active {
   color: #184a1c;
   border-bottom: 4px solid #184a1c;

@@ -5,9 +5,10 @@
 1. Install Python 3.11+.
 2. Create a virtual environment inside `backend/`.
 3. Install dependencies with `pip install -r requirements.txt`.
-4. Create migrations with `python manage.py makemigrations`.
-5. Apply migrations with `python manage.py migrate`.
-6. Start the API with `python manage.py runserver`.
+4. Create `.env` from `.env.example` and add your API keys.
+5. Create migrations with `python manage.py makemigrations`.
+6. Apply migrations with `python manage.py migrate`.
+7. Start the API with `python manage.py runserver`.
 
 The React frontend should use `VITE_API_URL=http://127.0.0.1:8000/api`.
 
@@ -46,3 +47,23 @@ The React frontend should use `VITE_API_URL=http://127.0.0.1:8000/api`.
 - `GET /api/weather/forecast/?location=Pokhara`
 - Uses live Open-Meteo geocoding + forecast data.
 - No API key is required.
+
+## Gemini Chatbot API
+
+- `POST /api/chatbot/message/`
+- Request body:
+
+```json
+{
+	"message": "How can I control aphids in tomato?",
+	"history": [
+		{ "role": "user", "text": "Hello" },
+		{ "role": "assistant", "text": "Hi! How can I help your farm today?" }
+	]
+}
+```
+
+- Add these keys in `backend/.env`:
+	- `GEMINI_API_KEY=your_api_key_here`
+	- `GEMINI_MODEL=gemini-1.5-flash` (optional)
+	- `GEMINI_SYSTEM_PROMPT=...` (optional)

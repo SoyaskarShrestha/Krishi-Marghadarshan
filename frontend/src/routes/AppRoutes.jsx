@@ -7,6 +7,7 @@ import {
 	AdvisorRoute,
 	Articles,
 	Cart,
+	Chatbot,
 	CompleteProfile,
 	Homepage,
 	Login,
@@ -33,6 +34,7 @@ function AppRoutes() {
 				)}
 			/>
 			<Route path="/advisory" element={<Advisory />} />
+			<Route path="/chatbot" element={<Chatbot />} />
 			<Route path="/signup" element={<SignUp />} />
 			<Route path="/complete-profile" element={<CompleteProfile />} />
 			<Route path="/login" element={<Login />} />

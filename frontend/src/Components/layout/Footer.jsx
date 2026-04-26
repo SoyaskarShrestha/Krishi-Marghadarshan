@@ -13,8 +13,11 @@ function Footer({
 	footerProps,
 	innerProps,
 }) {
-	const brandNode = brandClassName ? <div className={brandClassName}>{brand}</div> : <strong>{brand}</strong>
-	const copyNode = copyClassName ? <div className={copyClassName}>{copy}</div> : <p>{copy}</p>
+	const safeBrand = brand || 'Krishi Margadarshan'
+	const safeCopy = copy || ''
+	const safeLinks = Array.isArray(links) ? links : []
+	const brandNode = brandClassName ? <div className={brandClassName}>{safeBrand}</div> : <strong>{safeBrand}</strong>
+	const copyNode = copyClassName ? <div className={copyClassName}>{safeCopy}</div> : <p>{safeCopy}</p>
 
 	return (
 		<footer className={footerClassName} {...footerProps}>
@@ -28,7 +31,7 @@ function Footer({
 					brandNode
 				)}
 				<div className={linksClassName}>
-					{links.map((item) => (
+					{safeLinks.map((item) => (
 						<Link key={item.label} to={item.to}>
 							{item.label}
 						</Link>
