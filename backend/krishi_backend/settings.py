@@ -4,13 +4,15 @@ from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BASE_DIR.parent
 
 
 def _load_env_file(file_path):
     if not file_path.exists():
         return
 
-    for raw_line in file_path.read_text(encoding="utf-8").splitlines():
+    # Use utf-8-sig so files saved with BOM still parse correctly.
+    for raw_line in file_path.read_text(encoding="utf-8-sig").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
@@ -23,6 +25,7 @@ def _load_env_file(file_path):
 
 
 _load_env_file(BASE_DIR / ".env")
+_load_env_file(PROJECT_ROOT / ".env")
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-change-me")
 DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() == "true"
@@ -48,6 +51,7 @@ INSTALLED_APPS = [
     "weather",
     "cart",
     "chatbot",
+    "soil",
 ]
 
 MIDDLEWARE = [

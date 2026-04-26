@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soil Data Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f7f4ee;
+            --card: #ffffff;
+            --text: #20311f;
+            --muted: #5f6b5d;
+            --accent: #2f6b2f;
+            --border: #e1dccf;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .page {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            padding: 24px;
+            border-right: 1px solid var(--border);
+            background: linear-gradient(180deg, #fff, #f9f7f1);
+        }
+
+        .sidebar h1 {
+            margin: 0 0 8px;
+            font-size: 1.5rem;
+        }
+
+        .sidebar p {
+            margin: 0 0 16px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .stats {
+            display: grid;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .stat {
+            padding: 12px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+
+        .stat span {
+            display: block;
+            color: var(--muted);
+            font-size: 0.82rem;
+            margin-bottom: 4px;
+        }
+
+        .stat strong {
+            font-size: 1.1rem;
+        }
+
+        .section {
+            margin-top: 18px;
+        }
+
+        .section h2 {
+            margin: 0 0 10px;
+            font-size: 1rem;
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--muted);
+        }
+
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+
+        .legend {
+            margin-top: 18px;
+            padding: 12px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: var(--muted);
+        }
+
+        .legend-code {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @media (max-width: 900px) {
+            .page {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                border-right: 0;
+                border-bottom: 1px solid var(--border);
+            }
+
+            #map {
+                height: 70vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <aside class="sidebar">
+            <h1>Parent Soil Data</h1>
+            <p>
+                This page reads the shapefile stored in <strong>backend/data/soil data/parentsoil</strong>
+                and visualizes it as GeoJSON with a summary panel.
+            </p>
+
+            <div class="stats" id="summary-stats">
+                <div class="stat"><span>Total features</span><strong>Loading...</strong></div>
+            </div>
+
+            <div class="section">
+                <h2>Top landforms</h2>
+                <ul id="landform-list"><li>Loading...</li></ul>
+            </div>
+
+            <div class="section">
+                <h2>Top parent materials</h2>
+                <ul id="parent-material-list"><li>Loading...</li></ul>
+            </div>
+
+            <div class="section">
+                <h2>Top dominant soils</h2>
+                <ul id="dominant-soil-list"><li>Loading...</li></ul>
+            </div>
+
+            <div class="legend">
+                <strong>Visualization</strong>
+                <p style="margin: 8px 0 0;">Polygons are colored by landform group and can be clicked for feature details.</p>
+            </div>
+        </aside>
+
+        <div id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const geojsonUrl = "{{ geojson_url }}";
+        const summaryUrl = "{{ summary_url }}";
+
+        const map = L.map('map').setView([28.2, 84.0], 7);
+
+        map.createPane('labelsPane');
+        map.getPane('labelsPane').style.zIndex = 650;
+        map.getPane('labelsPane').style.pointerEvents = 'none';
+
+        // Base map without labels keeps terrain/context clear.
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20,
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        }).addTo(map);
+
+        // Label layer is drawn above soil polygons so place names remain readable.
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20,
+            pane: 'labelsPane',
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        }).addTo(map);
+
+        function colorByLandform(name) {
+            const value = String(name || '').toLowerCase();
+            if (value.includes('hill')) return '#7c5c3b';
+            if (value.includes('mount')) return '#4f6b3a';
+            if (value.includes('plain')) return '#2f6b6b';
+            if (value.includes('valley')) return '#4a6fa5';
+            return '#7a6a4f';
+        }
+
+        function buildList(targetId, items) {
+            const element = document.getElementById(targetId);
+            element.innerHTML = '';
+            if (!items || items.length === 0) {
+                element.innerHTML = '<li>No data found</li>';
+                return;
+            }
+            items.slice(0, 8).forEach(([label, count]) => {
+                const item = document.createElement('li');
+                item.textContent = `${label} (${count})`;
+                element.appendChild(item);
+            });
+        }
+
+        fetch(summaryUrl)
+            .then((response) => response.json())
+            .then((summary) => {
+                const statsElement = document.getElementById('summary-stats');
+                const stats = summary.stats || {};
+                statsElement.innerHTML = `
+                    <div class="stat"><span>Total features</span><strong>${summary.total_features ?? 0}</strong></div>
+                    <div class="stat"><span>Avg slope</span><strong>${stats.slope_med?.avg ?? '--'}</strong></div>
+                    <div class="stat"><span>Total area (sqkm)</span><strong>${stats.area_sqkm?.total ?? '--'}</strong></div>
+                `;
+                buildList('landform-list', summary.landforms || []);
+                buildList('parent-material-list', summary.parent_materials || []);
+                buildList('dominant-soil-list', summary.dominant_soils || []);
+            })
+            .catch(() => {
+                document.getElementById('summary-stats').innerHTML = '<div class="stat"><span>Error</span><strong>Unable to load summary</strong></div>';
+            });
+
+        fetch(geojsonUrl)
+            .then((response) => response.json())
+            .then((geojson) => {
+                const layer = L.geoJSON(geojson, {
+                    style: (feature) => ({
+                        color: colorByLandform(feature?.properties?.Landform),
+                        weight: 0.8,
+                        fillColor: colorByLandform(feature?.properties?.Landform),
+                        fillOpacity: 0.2,
+                    }),
+                    onEachFeature: (feature, leafletLayer) => {
+                        const props = feature.properties || {};
+                        const popupHtml = `
+                            <strong>${props.NAME || 'Unknown soil unit'}</strong><br>
+                            <span>Code: ${props.CODE || '--'}</span><br>
+                            <span>Landform: ${props.Landform || '--'}</span><br>
+                            <span>Parent material: ${props.Parent_Mat || '--'}</span><br>
+                            <span>Dominant soil: ${props.Dominant_S || '--'}</span><br>
+                            <span>Elevation: ${props.Elev_min || '--'} - ${props.Elev_max || '--'}</span><br>
+                            <span>Slope: ${props.Slope_med || '--'}</span>
+                        `;
+                        leafletLayer.bindPopup(popupHtml);
+                    },
+                }).addTo(map);
+
+                if (layer.getBounds && layer.getBounds().isValid()) {
+                    map.fitBounds(layer.getBounds(), { padding: [20, 20] });
+                }
+            })
+            .catch(() => {
+                alert('Unable to load soil GeoJSON. Check the backend logs and dataset path.');
+            });
+    </script>
+</body>
+</html>

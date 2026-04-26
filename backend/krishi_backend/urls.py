@@ -13,6 +13,7 @@ urlpatterns = [
     path("api/weather/", include("weather.urls")),
     path("api/cart/", include("cart.urls")),
     path("api/chatbot/", include("chatbot.urls")),
+    path("api/soil/", include("soil.urls")),
 ]
 
 if settings.DEBUG:
