@@ -1,6 +1,7 @@
 from django.db.models import Q
 from rest_framework import generics, mixins, permissions, status
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 
 from accounts.models import log_admin_action
 
@@ -125,6 +126,24 @@ class ArticleDetailView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixi
             )
         return response
 
+    def delete(self, request, *args, **kwargs):
+        article = self.get_object()
+        title = article.title or "Article"
+        article_id = article.id
+        category = article.category or ""
+        response = self.destroy(request, *args, **kwargs)
+        if response.status_code == 204:
+            log_admin_action(
+                actor=request.user,
+                action="delete",
+                target_type="article",
+                target_label=title,
+                target_id=article_id,
+                summary=f'Deleted article "{title}"',
+                metadata={"category": category},
+            )
+        return response
+
 
 class SavedArticleListCreateView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
     serializer_class = SavedArticleSerializer
@@ -155,10 +174,9 @@ class SavedArticleListCreateView(mixins.ListModelMixin, mixins.CreateModelMixin,
 class SavedArticleDetailView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def delete(self, request, article_id, *args, **kwargs):
-        deleted_count, _ = SavedArticle.objects.filter(user=request.user, article_id=article_id).delete()
-        if deleted_count == 0:
-            return Response({"message": "Saved article not found."}, status=status.HTTP_404_NOT_FOUND)
+    def delete(self, request, article_id):
+        saved = get_object_or_404(SavedArticle, user=request.user, article_id=article_id)
+        saved.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
