@@ -14,6 +14,7 @@ urlpatterns = [
     path("api/cart/", include("cart.urls")),
     path("api/chatbot/", include("chatbot.urls")),
     path("api/soil/", include("soil.urls")),
+    path("api/", include("crop_prediction.urls")),
 ]
 
 if settings.DEBUG:
