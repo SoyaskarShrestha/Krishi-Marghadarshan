@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "cart",
     "chatbot",
     "soil",
+    "crop_prediction.apps.CropPredictionConfig",
 ]
 
 MIDDLEWARE = [
