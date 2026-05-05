@@ -113,7 +113,7 @@ function Homepage() {
 
 	return (
 		<div className="home-page" data-node-id="2:455">
-			<NavBar showSearch searchPlaceholder={t('home.headerSearch')} />
+			<NavBar />
 
 			<main className="home-wrap home-main" data-node-id="2:456">
 				<section className="home-hero" data-node-id="2:457">
