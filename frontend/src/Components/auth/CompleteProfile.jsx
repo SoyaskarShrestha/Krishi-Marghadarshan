@@ -9,7 +9,7 @@ import './Auth.css'
 function CompleteProfile() {
 	const navigate = useNavigate()
 	const location = useLocation()
-	const { updateProfile } = useAuth()
+	const { updateProfile, currentUser } = useAuth()
 	const { t } = useTranslation()
 	const signupEmail = location.state?.email || ''
 	const [formData, setFormData] = useState({
@@ -19,6 +19,7 @@ function CompleteProfile() {
 		location: '',
 		cropType: '',
 		phone: '',
+		userType: currentUser?.role || '',
 	})
 	const [feedback, setFeedback] = useState({ type: '', text: '' })
 
@@ -83,6 +84,16 @@ function CompleteProfile() {
 						<label htmlFor="phone">
 							{t('auth.completeProfile.phone')}
 							<input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} required />
+						</label>
+
+						<label htmlFor="userType">
+							{t('auth.completeProfile.userType', { defaultValue: 'User type' })}
+							<select id="userType" name="userType" value={formData.userType} onChange={handleChange} required>
+								<option value="">{t('auth.completeProfile.userTypePlaceholder', { defaultValue: 'Select your user type' })}</option>
+								<option value="farmer">{t('auth.completeProfile.farmer', { defaultValue: 'Farmer' })}</option>
+								<option value="advisor">{t('auth.completeProfile.advisor', { defaultValue: 'Advisor' })}</option>
+								<option value="buyer">{t('auth.completeProfile.buyer', { defaultValue: 'Buyer' })}</option>
+							</select>
 						</label>
 
 						<button type="submit" className="auth-button primary">{t('auth.completeProfile.submit')}</button>

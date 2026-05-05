@@ -1,4 +1,4 @@
-﻿import { NavLink } from 'react-router-dom'
+﻿import { NavLink, useNavigate } from 'react-router-dom'
 import bagIcon from '../../assets/navbar/bag.svg'
 import chatbotIcon from '../../assets/navbar/chatbot.svg'
 import languageIcon from '../../assets/navbar/language.svg'
@@ -19,8 +19,11 @@ function NavBar({
 }) {
 	const { isNepali, toggleLanguage } = useLanguage()
 	const { t } = useTranslation()
-	const { currentUser } = useAuth()
+	const { currentUser, isAuthenticated } = useAuth()
 	const resolvedSearchPlaceholder = searchPlaceholder || t('navbar.searchPlaceholder')
+	const isAdmin = Boolean(currentUser?.isAdmin)
+	const isAdvisor = Boolean(currentUser?.isAdvisor)
+	const isFarmer = Boolean(currentUser?.isFarmer)
 
 	const labels = {
 		brand: t('navbar.brand'),
@@ -34,7 +37,12 @@ function NavBar({
 		advisorPanel: t('navbar.navigation.advisorPanel', { defaultValue: 'Advisor Panel' }),
 		language: isNepali ? t('navbar.language.en') : t('navbar.language.ne'),
 		profile: t('navbar.navigation.profile'),
+		login: t('navbar.navigation.login', { defaultValue: 'Login' }),
+		signUp: t('navbar.navigation.signUp', { defaultValue: 'Sign Up' }),
 	}
+
+	const showFarmerPages = isFarmer || isAdmin || (!currentUser && false)
+	const showAdvisorPages = isAdvisor || isAdmin
 
 	return (
 		<header className="navbar">
@@ -55,26 +63,33 @@ function NavBar({
 
 				<nav className="navbar-nav" aria-label="Main navigation">
 					<NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>{labels.home}</NavLink>
-					<NavLink to="/weather" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.weather}</NavLink>
+					{showFarmerPages ? <NavLink to="/weather" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.weather}</NavLink> : null}
 					<NavLink to="/articles" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.articles}</NavLink>
 					<NavLink to="/shop" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.shop}</NavLink>
-					<NavLink to="/advisory" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.advisory}</NavLink>
-					<NavLink to="/crop-prediction" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.cropPrediction}</NavLink>
+					{showFarmerPages ? <NavLink to="/advisory" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.advisory}</NavLink> : null}
+					{showFarmerPages ? <NavLink to="/crop-prediction" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.cropPrediction}</NavLink> : null}
 					<NavLink to="/chatbot" className={({ isActive }) => `navbar-chatbot-link ${isActive ? 'active' : ''}`}>
 						<span className="navbar-inline-icon">
 							<img src={chatbotIcon} alt="" aria-hidden="true" className="navbar-icon-image" />
 						</span>
 						<span>{labels.chatbot}</span>
 					</NavLink>
-					{currentUser?.isAdvisor ? (
+					{showAdvisorPages ? (
 						<NavLink to="/advisor-panel" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.advisorPanel}</NavLink>
 					) : null}
-					{currentUser?.isAdmin ? (
+					{isAdmin ? (
 						<NavLink to="/admin-dashboard" className={({ isActive }) => (isActive ? 'active' : '')}>Admin</NavLink>
 					) : null}
 				</nav>
 
 				<div className="navbar-actions">
+					{showCart ? (
+						<NavLink to="/cart" className="navbar-bag" aria-label="Cart">
+							<img src={bagIcon} alt="" aria-hidden="true" className="navbar-icon-image" />
+							<span className="navbar-bag-count">{cartCount}</span>
+						</NavLink>
+					) : null}
+
 					{showLanguage ? (
 						<button type="button" className="navbar-language" onClick={toggleLanguage}>
 							<span className="navbar-inline-icon">
@@ -83,19 +98,26 @@ function NavBar({
 							<span>{labels.language}</span>
 						</button>
 					) : null}
-					{showCart ? (
-						<NavLink to="/cart" className="navbar-bag" aria-label="Cart">
-							<img src={bagIcon} alt="" aria-hidden="true" className="navbar-icon-image" />
-							<span className="navbar-bag-count">{cartCount}</span>
-						</NavLink>
-					) : null}
-				
-					<NavLink to="/user-profile" className="navbar-profile-link" aria-label="Profile">
-						<span className="navbar-inline-icon navbar-profile-icon" aria-hidden="true">
-							<img src={profileSimpleIcon} alt="" className="navbar-icon-image" />
-						</span>
-						<span>{labels.profile}</span>
-					</NavLink>
+
+					{isAuthenticated ? (
+						<>
+							<NavLink to="/user-profile" className="navbar-profile-link" aria-label="Profile">
+								<span className="navbar-inline-icon navbar-profile-icon" aria-hidden="true">
+									<img src={profileSimpleIcon} alt="" className="navbar-icon-image" />
+								</span>
+								<span>{labels.profile}</span>
+							</NavLink>
+						</>
+					) : (
+						<div className="navbar-auth-links">
+							<NavLink to="/login" className="navbar-auth-link">
+								{labels.login}
+							</NavLink>
+							<NavLink to="/signup" className="navbar-auth-link navbar-auth-link-primary">
+								{labels.signUp}
+							</NavLink>
+						</div>
+					)}
 				</div>
 			</div>
 		</header>

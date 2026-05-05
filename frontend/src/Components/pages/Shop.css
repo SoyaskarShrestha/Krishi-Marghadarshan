@@ -102,68 +102,26 @@
   height: 16px;
 }
 
-.shop-side-cards {
-  display: grid;
-  gap: 1.5rem;
+.shop-add-product-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.8rem;
+  min-height: 410px;
 }
 
-.shop-side-card {
-  position: relative;
-  min-height: 193px;
-  border-radius: 32px;
-  overflow: hidden;
-  padding: 2rem;
-}
-
-.shop-side-card-copy {
-  position: relative;
-  z-index: 1;
-  max-width: 240px;
-}
-
-.shop-side-card h3 {
+.shop-add-product-panel h3 {
   margin: 0;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.35rem;
-  line-height: 1.1;
+  font-size: 1.75rem;
+  line-height: 1.05;
+  color: #154212;
 }
 
-.shop-side-card p {
-  margin: 0.55rem 0 0;
-  line-height: 1.5;
-  font-size: 0.95rem;
-}
-
-.shop-side-card-decor {
-  position: absolute;
-  right: -1px;
-  bottom: -1px;
-  width: 116px;
-  height: 116px;
-  object-fit: contain;
-  opacity: 0.95;
-}
-
-.shop-side-card.advice {
-  background: #5c5d46;
-  color: #fff;
-}
-
-.shop-side-card.delivery {
-  background: #ffd1c0;
-  color: #866457;
-}
-
-.shop-side-icons {
-  margin-top: 0.85rem;
-  display: flex;
-  gap: 0.6rem;
-}
-
-.shop-side-icons img {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
+.shop-add-product-panel p {
+  margin: 0;
+  color: #42493e;
+  line-height: 1.55;
 }
 
 .shop-catalog {
@@ -393,6 +351,33 @@
   justify-content: space-between;
   align-items: flex-end;
   gap: 1rem;
+}
+
+.shop-add-product-trigger {
+  border: 0;
+  border-radius: 999px;
+  background: #154212;
+  color: #fff;
+  padding: 0.95rem 1.25rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(21, 66, 18, 0.14);
+  white-space: nowrap;
+}
+
+.shop-product-modal {
+  width: min(100%, 560px);
+}
+
+.shop-product-modal p {
+  margin: 0.85rem 0 0;
+  color: #42493e;
+  line-height: 1.55;
+}
+
+.shop-product-form {
+  margin-top: 1rem;
 }
 
 .shop-content-title h3 {
@@ -640,6 +625,14 @@
     width: 100%;
     justify-content: space-between;
   }
+
+  .shop-add-product-trigger {
+	  width: 100%;
+	}
+
+  .shop-add-product-panel {
+	  min-height: auto;
+	}
 
   .shop-sort-select {
     min-width: 0;

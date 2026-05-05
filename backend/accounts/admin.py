@@ -18,4 +18,4 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "full_name", "location", "crop_type", "phone")
+    list_display = ("user", "user_type", "full_name", "location", "crop_type", "phone")

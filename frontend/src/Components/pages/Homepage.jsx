@@ -4,6 +4,7 @@ import './Homepage.css'
 import NavBar from '../layout/NavBar'
 import Footer from '../layout/Footer'
 import { API_ENDPOINTS, apiRequest } from '../../lib/api'
+import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import featuredImage from '../../assets/homepage/featured.jpg'
 import heroImage from '../../assets/homepage/hero.jpg'
@@ -25,6 +26,75 @@ const productImages = [productImage1, productImage2, productImage3]
 
 function Homepage() {
 	const { t } = useTranslation()
+	const { currentUser } = useAuth()
+	const isAdmin = Boolean(currentUser?.isAdmin)
+	const role = currentUser?.accessRole || (isAdmin ? 'admin' : currentUser?.role || 'guest')
+	const quickAccessLinksByRole = useMemo(
+		() => ({
+			guest: ['/articles', '/shop'],
+			buyer: ['/articles', '/shop'],
+			farmer: ['/weather', '/articles', '/shop', '/advisory', '/crop-prediction'],
+			advisor: ['/articles', '/shop'],
+			admin: ['/weather', '/articles', '/shop', '/advisory', '/crop-prediction'],
+		}),
+		[]
+	)
+	const heroConfigByRole = {
+		guest: { primary: '/articles', primaryLabel: t('home.heroSecondary'), secondary: '/shop', secondaryLabel: t('home.seeAllProducts', { defaultValue: 'Shop' }), panelLink: '/chatbot' },
+		buyer: { primary: '/articles', primaryLabel: t('home.heroSecondary'), secondary: '/shop', secondaryLabel: t('home.seeAllProducts', { defaultValue: 'Shop' }), panelLink: '/chatbot' },
+		farmer: { primary: '/weather', primaryLabel: t('home.heroPrimary'), secondary: '/advisory', secondaryLabel: t('home.advisoryPanelLink'), panelLink: '/crop-prediction' },
+		advisor: { primary: '/articles', primaryLabel: t('home.heroSecondary'), secondary: '/advisor-panel', secondaryLabel: t('navbar.navigation.advisorPanel', { defaultValue: 'Advisor Panel' }), panelLink: '/advisor-panel' },
+		admin: { primary: '/admin-dashboard', primaryLabel: 'Admin Dashboard', secondary: '/advisor-panel', secondaryLabel: t('navbar.navigation.advisorPanel', { defaultValue: 'Advisor Panel' }), panelLink: '/admin-dashboard' },
+	}
+	const roleCopyByRole = {
+		guest: {
+			badge: 'Guest Dashboard',
+			title: 'Browse public farming resources before you sign in.',
+			description: 'You can explore articles, shop products, and use the chatbot without logging in.',
+			panelBadge: 'Public access',
+			panelTitle: 'Get started with articles, shop, and chatbot',
+			panelBody: 'Create an account when you are ready to unlock weather, advisory, and crop prediction tools.',
+			panelLink: 'Open Chatbot',
+		},
+		buyer: {
+			badge: 'Buyer Dashboard',
+			title: 'Shop smarter and stay informed.',
+			description: 'Browse agriculture articles, compare products, and use the chatbot for quick guidance.',
+			panelBadge: 'Buyer tools',
+			panelTitle: 'Your shopping and learning space',
+			panelBody: 'Use the marketplace and articles to keep your buying decisions practical and informed.',
+			panelLink: 'Open Shop',
+		},
+		farmer: {
+			badge: 'Farmer Dashboard',
+			title: 'Manage your farm with weather, advice, and crop prediction.',
+			description: 'Check weather forecasts, ask experts, predict crops, and shop for supplies from one place.',
+			panelBadge: 'Farmer tools',
+			panelTitle: 'Actionable support for your farm',
+			panelBody: 'Use advisory, crop prediction, and weather insights together for better field decisions.',
+			panelLink: 'Open Advisory',
+		},
+		advisor: {
+			badge: 'Advisor Dashboard',
+			title: 'Review questions and respond faster.',
+			description: 'Stay in touch with farmers through articles, the chatbot, and your advisory panel.',
+			panelBadge: 'Advisor tools',
+			panelTitle: 'Questions that need your attention',
+			panelBody: 'Jump into the advisor panel to reply to questions and keep the knowledge flow moving.',
+			panelLink: 'Open Advisor Panel',
+		},
+		admin: {
+			badge: 'Admin Dashboard',
+			title: 'Oversee everything from one control center.',
+			description: 'Manage users, advisory flow, shop content, weather access, and the dashboard from a single account.',
+			panelBadge: 'System control',
+			panelTitle: 'Full access and oversight',
+			panelBody: 'Use the admin dashboard to monitor, manage, and coordinate every part of the project.',
+			panelLink: 'Open Admin Dashboard',
+		},
+	}
+	const heroConfig = heroConfigByRole[role]
+	const roleCopy = roleCopyByRole[role]
 	const quickAccess = useMemo(
 		() =>
 			t('home.quickAccess', { returnObjects: true }).map((item, index) => ({
@@ -32,8 +102,8 @@ function Homepage() {
 				icon: [weatherIcon, articlesIcon, marketplaceIcon, advisoryIcon][index],
 				ctaIcon: [weatherArrowIcon, articlesArrowIcon, marketplaceArrowIcon, advisoryArrowIcon][index],
 				href: ['/weather', '/articles', '/shop', '/advisory'][index],
-			})),
-		[t]
+			})).filter((item) => quickAccessLinksByRole[role].includes(item.href)),
+		[t, role, quickAccessLinksByRole]
 	)
 	const fallbackProducts = useMemo(
 		() =>
@@ -52,20 +122,6 @@ function Homepage() {
 	)
 	const [products, setProducts] = useState(fallbackProducts)
 	const [featuredArticle, setFeaturedArticle] = useState(fallbackFeaturedArticle)
-	const [isUsingFallbackProducts, setIsUsingFallbackProducts] = useState(true)
-	const [isUsingFallbackArticle, setIsUsingFallbackArticle] = useState(true)
-
-	useEffect(() => {
-		if (isUsingFallbackProducts) {
-			setProducts(fallbackProducts)
-		}
-	}, [fallbackProducts, isUsingFallbackProducts])
-
-	useEffect(() => {
-		if (isUsingFallbackArticle) {
-			setFeaturedArticle(fallbackFeaturedArticle)
-		}
-	}, [fallbackFeaturedArticle, isUsingFallbackArticle])
 
 	useEffect(() => {
 		let ignore = false
@@ -88,7 +144,6 @@ function Homepage() {
 										tag: product.badge || product.category || t('home.defaultTag'),
 						}))
 					)
-					setIsUsingFallbackProducts(false)
 				}
 
 				if (!ignore && Array.isArray(articles) && articles.length > 0) {
@@ -97,7 +152,6 @@ function Homepage() {
 						title: pick.title,
 						description: pick.description,
 					})
-					setIsUsingFallbackArticle(false)
 				}
 			} catch {
 				// Keep fallback content if backend is unavailable.
@@ -109,7 +163,7 @@ function Homepage() {
 		return () => {
 			ignore = true
 		}
-	}, [])
+	}, [t])
 
 	return (
 		<div className="home-page" data-node-id="2:455">
@@ -120,26 +174,30 @@ function Homepage() {
 					<img src={heroImage} alt="Terraced fields" className="home-hero-image" />
 					<div className="home-hero-overlay" />
 					<div className="home-hero-content">
-						<span className="home-hero-badge">{t('home.heroBadge')}</span>
+						<span className="home-hero-badge">{roleCopy.badge}</span>
+						<div className="home-role-banner">
+							<small>{role === 'guest' ? 'Public access' : roleCopy.panelBadge}</small>
+							<strong>{roleCopy.title}</strong>
+						</div>
 						<h2>
 							<span>{t('home.heroTitle.0')}</span>
 							<span>{t('home.heroTitle.1')}</span>
 						</h2>
-						<p>{t('home.heroBody')}</p>
+						<p>{roleCopy.description}</p>
 						<div className="home-hero-actions">
-							<Link className="home-btn home-btn-primary" to="/weather">
-								{t('home.heroPrimary')}
+							<Link className="home-btn home-btn-primary" to={heroConfig.primary}>
+								{heroConfig.primaryLabel}
 							</Link>
-							<Link className="home-btn home-btn-ghost" to="/articles">
-								{t('home.heroSecondary')}
+							<Link className="home-btn home-btn-ghost" to={heroConfig.secondary}>
+								{heroConfig.secondaryLabel}
 							</Link>
 						</div>
 					</div>
 					<div className="home-hero-panel">
-						<div className="home-hero-panel-chip">{t('home.advisoryPanelBadge')}</div>
-						<h3>{t('home.advisoryPanelTitle')}</h3>
-						<p>{t('home.advisoryPanelBody')}</p>
-						<Link to="/advisory">{t('home.advisoryPanelLink')}</Link>
+						<div className="home-hero-panel-chip">{roleCopy.panelBadge}</div>
+						<h3>{roleCopy.panelTitle}</h3>
+						<p>{roleCopy.panelBody}</p>
+						<Link to={heroConfig.panelLink}>{roleCopy.panelLink}</Link>
 					</div>
 				</section>
 

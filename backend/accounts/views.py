@@ -154,7 +154,9 @@ class ConsultationSummaryView(APIView):
         now = timezone.now()
         start_of_week = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
 
-        available_advisors = User.objects.filter(is_active=True).filter(Q(is_staff=True) | Q(is_superuser=True)).count()
+        available_advisors = User.objects.filter(is_active=True).filter(
+            Q(is_staff=True) | Q(is_superuser=True) | Q(profile__user_type="advisor")
+        ).distinct().count()
 
         my_pending_questions = AdvisoryQuestion.objects.filter(user=request.user, status=AdvisoryQuestion.STATUS_PENDING).count()
         my_answered_this_week = AdvisoryQuestion.objects.filter(

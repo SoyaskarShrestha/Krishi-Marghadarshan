@@ -13,7 +13,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ("full_name", "location", "crop_type", "phone", "profile_photo")
+        fields = ("full_name", "location", "crop_type", "phone", "user_type", "profile_photo")
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -90,6 +90,7 @@ class CompleteProfileSerializer(serializers.Serializer):
     location = serializers.CharField()
     cropType = serializers.CharField()
     phone = serializers.CharField()
+    userType = serializers.ChoiceField(choices=UserProfile.USER_TYPE_CHOICES, required=False, allow_blank=True)
 
     def save(self, **kwargs):
         email = self.validated_data["email"].strip().lower()
@@ -107,6 +108,7 @@ class CompleteProfileSerializer(serializers.Serializer):
         profile.location = self.validated_data["location"].strip()
         profile.crop_type = self.validated_data["cropType"].strip()
         profile.phone = self.validated_data["phone"].strip()
+        profile.user_type = self.validated_data.get("userType") or profile.user_type or UserProfile.USER_TYPE_BUYER
         profile.save()
         return user
 
@@ -146,7 +148,7 @@ class OAuthExchangeSerializer(serializers.Serializer):
     def save(self, **kwargs):
         provider = self.validated_data["provider"].strip().lower()
         email = self.validated_data["email"].strip().lower()
-        fallback_name = self.validated_data.get("name", "").strip() or f"{provider.title()} Farmer"
+        fallback_name = self.validated_data.get("name", "").strip() or f"{provider.title()} User"
 
         user, created = User.objects.get_or_create(
             email=email,

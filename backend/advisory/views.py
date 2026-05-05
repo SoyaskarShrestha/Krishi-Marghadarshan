@@ -7,6 +7,11 @@ from .models import AdvisoryQuestion
 from .serializers import AdvisoryQuestionSerializer, AdvisoryReplySerializer
 
 
+def get_user_role(user):
+    profile = getattr(user, "profile", None)
+    return getattr(profile, "user_type", "") or ""
+
+
 ADVISORY_META = {
     "categories": {
         "en": ["Crops", "Soil Testing", "Livestock"],
@@ -79,11 +84,13 @@ class AdvisoryQuestionCreateView(mixins.CreateModelMixin, generics.GenericAPIVie
     serializer_class = AdvisoryQuestionSerializer
 
     def get_permissions(self):
-        if self.request.method == "GET":
-            return [permissions.IsAuthenticated()]
-        return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     def post(self, request, *args, **kwargs):
+        user_role = get_user_role(request.user)
+        if user_role not in {"farmer", "admin"} and not (request.user.is_staff or request.user.is_superuser):
+            return Response({"message": "Only farmer accounts can submit advisory questions."}, status=403)
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user if request.user.is_authenticated else None)
@@ -97,7 +104,11 @@ class AdvisoryQuestionCreateView(mixins.CreateModelMixin, generics.GenericAPIVie
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by("-created_at")
-        is_advisor_or_admin = bool(request.user and (request.user.is_staff or request.user.is_superuser))
+        user_role = get_user_role(request.user)
+        is_advisor_or_admin = bool(request.user and request.user.is_authenticated and (user_role == "advisor" or request.user.is_staff or request.user.is_superuser))
+
+        if user_role not in {"farmer", "advisor", "admin"} and not (request.user.is_staff or request.user.is_superuser):
+            return Response({"message": "Access denied."}, status=403)
 
         if not is_advisor_or_admin:
             queryset = queryset.filter(user=request.user)
@@ -116,7 +127,8 @@ class AdvisoryQuestionCreateView(mixins.CreateModelMixin, generics.GenericAPIVie
 
 class IsAdvisorOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser))
+        user_role = get_user_role(request.user)
+        return bool(request.user and request.user.is_authenticated and (user_role == "advisor" or request.user.is_staff or request.user.is_superuser))
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by("-created_at")
         serializer = self.get_serializer(queryset, many=True)

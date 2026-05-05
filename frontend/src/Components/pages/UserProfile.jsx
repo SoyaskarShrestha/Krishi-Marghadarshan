@@ -127,6 +127,13 @@ function UserProfile() {
 	const displayPhone = currentUser?.profile?.phone || t('userProfile.fallbackPhone')
 	const displayLocation = currentUser?.profile?.location || t('userProfile.fallbackLocation')
 	const displayCropType = currentUser?.profile?.cropType || t('userProfile.fallbackCropType')
+	const displayUserRole = currentUser?.accessRole === 'admin' || currentUser?.isAdmin
+		? t('userProfile.adminRole', { defaultValue: 'Admin' })
+		: currentUser?.accessRole === 'advisor' || currentUser?.isAdvisor
+			? t('userProfile.advisorRole', { defaultValue: 'Advisor' })
+			: currentUser?.accessRole === 'farmer' || currentUser?.isFarmer
+				? t('userProfile.farmerRole', { defaultValue: 'Farmer' })
+				: t('userProfile.buyerRole', { defaultValue: 'Buyer' })
 	const profilePhotoUrl = resolveProfilePhotoUrl(currentUser?.profile?.profilePhoto)
 	const fileInputRef = useRef(null)
 
@@ -468,6 +475,7 @@ function UserProfile() {
 
 					<div className="member-profile-copy">
 						<span className="member-badge">{t('userProfile.premiumMember')}</span>
+						<span className="member-badge">{displayUserRole}</span>
 						<h2>{displayName}</h2>
 						<p className="member-real-name">{displayFullName}</p>
 						<div className="member-phone-row"><span className="member-inline-icon"><PhoneIcon /></span><span>{displayPhone}</span></div>

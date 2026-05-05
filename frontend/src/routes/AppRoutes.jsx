@@ -2,9 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import {
 	Advisory,
 	AdminDashboard,
-	AdminRoute,
 	AdvisorPanel,
-	AdvisorRoute,
 	Articles,
 	Cart,
 	Chatbot,
@@ -13,6 +11,7 @@ import {
 	Homepage,
 	Login,
 	ProtectedRoute,
+	RoleRoute,
 	Shop,
 	SignUp,
 	UserProfile,
@@ -23,7 +22,14 @@ function AppRoutes() {
 	return (
 		<Routes>
 			<Route path="/" element={<Homepage />} />
-			<Route path="/weather" element={<WeatherForecast />} />
+			<Route
+				path="/weather"
+				element={(
+					<RoleRoute allowRoles={["farmer"]}>
+						<WeatherForecast />
+					</RoleRoute>
+				)}
+			/>
 			<Route path="/articles" element={<Articles />} />
 			<Route path="/shop" element={<Shop />} />
 			<Route
@@ -34,9 +40,23 @@ function AppRoutes() {
 					</ProtectedRoute>
 				)}
 			/>
-			<Route path="/advisory" element={<Advisory />} />
+			<Route
+				path="/advisory"
+				element={(
+					<RoleRoute allowRoles={["farmer", "advisor"]}>
+						<Advisory />
+					</RoleRoute>
+				)}
+			/>
 			<Route path="/chatbot" element={<Chatbot />} />
-			<Route path="/crop-prediction" element={<CropPrediction />} />
+			<Route
+				path="/crop-prediction"
+				element={(
+					<RoleRoute allowRoles={["farmer"]}>
+						<CropPrediction />
+					</RoleRoute>
+				)}
+			/>
 			<Route path="/signup" element={<SignUp />} />
 			<Route path="/complete-profile" element={<CompleteProfile />} />
 			<Route path="/login" element={<Login />} />
@@ -51,17 +71,17 @@ function AppRoutes() {
 			<Route
 				path="/advisor-panel"
 				element={(
-					<AdvisorRoute>
+					<RoleRoute allowRoles={["advisor"]}>
 						<AdvisorPanel />
-					</AdvisorRoute>
+					</RoleRoute>
 				)}
 			/>
 			<Route
 				path="/admin-dashboard"
 				element={(
-					<AdminRoute>
+					<RoleRoute allowRoles={["admin"]}>
 						<AdminDashboard />
-					</AdminRoute>
+					</RoleRoute>
 				)}
 			/>
 			<Route path="*" element={<Navigate to="/" replace />} />

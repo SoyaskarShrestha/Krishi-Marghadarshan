@@ -7,19 +7,41 @@ from .models import CartItem, Product
 from .serializers import CartItemSerializer, ProductSerializer
 
 
+def get_user_role(user):
+    profile = getattr(user, "profile", None)
+    return getattr(profile, "user_type", "") or ""
 
-class IsSuperUser(permissions.BasePermission):
+
+class CanCreateProduct(permissions.BasePermission):
     def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        if request.method == "POST":
+            role = get_user_role(request.user)
+            return bool(
+                request.user
+                and request.user.is_authenticated
+                and (role == "farmer" or request.user.is_staff or request.user.is_superuser)
+            )
+
         return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
+
+
+class CanManageProduct(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and (request.user.is_staff or request.user.is_superuser)
+        )
 
 
 class ProductListView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
     queryset = Product.objects.order_by("id")
     serializer_class = ProductSerializer
     def get_permissions(self):
-        if self.request.method in permissions.SAFE_METHODS:
-            return [permissions.AllowAny()]
-        return [IsSuperUser()]
+        return [CanCreateProduct()]
 
 
     def get(self, request, *args, **kwargs):
@@ -45,7 +67,7 @@ class ProductDetailView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixi
     def get_permissions(self):
         if self.request.method in permissions.SAFE_METHODS:
             return [permissions.AllowAny()]
-        return [IsSuperUser()]
+        return [CanManageProduct()]
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
