@@ -37,7 +37,7 @@ function CropPrediction() {
 			role: 'assistant',
 			kind: 'intro',
 			text: t('cropPrediction.intro', {
-				defaultValue: 'Share your location and soil readings to get the top 3 crop matches.',
+				defaultValue: 'Share your location and soil readings to get the top 1 crop matches.',
 			}),
 		},
 	])
