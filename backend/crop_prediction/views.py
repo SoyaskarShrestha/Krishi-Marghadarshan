@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .serializers import PredictInputSerializer, BatchPredictSerializer
-from .ml_engine   import predict_top3, get_district_meta, all_districts, SOIL_TYPE_CHOICES, SEASON_CHOICES
+from .ml_engine   import predict_top3, get_district_meta, all_districts, SOIL_TYPE_CHOICES, SEASON_CHOICES, normalize_season_for_model
 
 
 def _get_ml():
@@ -29,8 +29,9 @@ def _model_ready():
 # ── Helper: build full input dict (auto-fills Province/Region/Zone) ────────
 def _build_full_input(validated_data: dict) -> dict:
     district = validated_data["District"]
-    meta     = get_district_meta(district)          # Province, Region_Type, Agro_Zone
-    return {**validated_data, **meta}
+    meta = get_district_meta(district)          # Province, Region_Type, Agro_Zone
+    model_season = normalize_season_for_model(validated_data["Season"])
+    return {**validated_data, **meta, "Season": model_season}
 
 
 # ══════════════════════════════════════════════════════════════

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import Footer from '../layout/Footer'
 import NavBar from '../layout/NavBar'
 import { API_ENDPOINTS, apiRequest } from '../../lib/api'
+import MapLocationSelector from '../soil/MapLocationSelector'
 import botIcon from '../../assets/navbar/chatbot.svg'
 import './CropPrediction.css'
 
@@ -29,6 +30,7 @@ function CropPrediction() {
 	const [isLoadingOptions, setIsLoadingOptions] = useState(true)
 	const [isSending, setIsSending] = useState(false)
 	const [errorMessage, setErrorMessage] = useState('')
+	const [showMapSelector, setShowMapSelector] = useState(false)
 	const [messages, setMessages] = useState([
 		{
 			id: 1,
@@ -114,6 +116,38 @@ function CropPrediction() {
 	const handleInputChange = (event) => {
 		const { name, value } = event.target
 		setFormData((previous) => ({ ...previous, [name]: value }))
+	}
+
+	const handleLocationSelect = (locationData) => {
+		const normalizeDistrict = (value) =>
+			String(value || '')
+				.toLowerCase()
+				.replace(/district/g, '')
+				.replace(/metropolitan city/g, '')
+				.replace(/\s+/g, ' ')
+				.trim()
+
+		const guessed = normalizeDistrict(locationData.District)
+		const matchedDistrict = options.districts.find((item) => {
+			const normalizedItem = normalizeDistrict(item)
+			return normalizedItem === guessed || guessed.includes(normalizedItem) || normalizedItem.includes(guessed)
+		})
+
+		// Auto-fill the form with extracted soil data
+		setFormData((previous) => ({
+			...previous,
+			District: matchedDistrict || previous.District,
+			Altitude_m: locationData.Altitude_m || previous.Altitude_m,
+			Soil_pH: locationData.Soil_pH || previous.Soil_pH,
+			Nitrogen_kg_ha: locationData.Nitrogen_kg_ha || previous.Nitrogen_kg_ha,
+			Phosphorus_kg_ha: locationData.Phosphorus_kg_ha || previous.Phosphorus_kg_ha,
+			Potassium_kg_ha: locationData.Potassium_kg_ha || previous.Potassium_kg_ha,
+			Soil_Type: locationData.Soil_Type || previous.Soil_Type,
+		}))
+		setShowMapSelector(false)
+		// Show success message
+		setErrorMessage('')
+		alert('Location and soil data successfully loaded!')
 	}
 
 	const buildUserSummary = (payload) => (
@@ -246,6 +280,14 @@ function CropPrediction() {
 									))}
 								</select>
 							</div>
+							<button 
+								type="button" 
+								className="crop-predict-map-btn"
+								onClick={() => setShowMapSelector(true)}
+								title="Select location on map to auto-fill soil data"
+							>
+								📍 Select Location on Map
+							</button>
 						</div>
 
 						<div className="crop-predict-form-block">
@@ -332,6 +374,15 @@ function CropPrediction() {
 					</div>
 				</section>
 			</main>
+
+			{showMapSelector && (
+				<MapLocationSelector 
+					onLocationSelect={handleLocationSelect}
+					onClose={() => setShowMapSelector(false)}
+					soilTypes={options.soil_types}
+				/>
+			)}
+
 			<Footer
 				footerClassName="crop-predict-footer"
 				innerClassName="crop-predict-footer-inner"

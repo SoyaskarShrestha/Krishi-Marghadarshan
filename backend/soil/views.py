@@ -1,10 +1,16 @@
 from collections import Counter
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+import json
 
 import shapefile
+import rasterio
+import numpy as np
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
 from pyproj import Transformer
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
@@ -160,3 +166,213 @@ def soil_map_page(request):
             "summary_url": "/api/soil/summary/",
         },
     )
+
+
+# ============================================================================
+# RASTER SOIL DATA ENDPOINTS
+# ============================================================================
+
+@require_http_methods(["GET"])
+def soil_raster_layers(request):
+    """List all available soil raster layers with metadata"""
+    soil_data_path = BACKEND_ROOT / "data" / "soil data"
+    
+    soil_layers = {
+        'ph': {'path': 'ph/ph.tif', 'unit': 'pH (0-14)', 'description': 'Soil pH Level'},
+        'nitrogen': {'path': 'nitrogen/nitrogen.tif', 'unit': '%', 'description': 'Nitrogen Content'},
+        'phosphorus': {'path': 'phosphorus/p2o5.tif', 'unit': 'mg/kg', 'description': 'Available Phosphorus'},
+        'potassium': {'path': 'potassium/k.tif', 'unit': 'mg/kg', 'description': 'Available Potassium'},
+        'boron': {'path': 'boron/boron.tif', 'unit': 'mg/kg', 'description': 'Boron Content'},
+        'zinc': {'path': 'zinc/zinc.tif', 'unit': 'mg/kg', 'description': 'Zinc Content'},
+        'clay': {'path': 'clay/clay.tif', 'unit': '%', 'description': 'Clay Percentage'},
+        'sand': {'path': 'sand/sand.tif', 'unit': '%', 'description': 'Sand Percentage'},
+        'silt': {'path': 'slit/slit.tif', 'unit': '%', 'description': 'Silt Percentage'},
+        'organic': {'path': 'organic/organic.tif', 'unit': '%', 'description': 'Organic Matter Content'},
+    }
+    
+    layers = []
+    for param_name, info in soil_layers.items():
+        full_path = soil_data_path / info['path']
+        if full_path.exists():
+            try:
+                with rasterio.open(full_path) as src:
+                    data = src.read(1)
+                    valid_mask = ~np.isnan(data)
+                    valid_data = data[valid_mask]
+                    
+                    layers.append({
+                        'name': param_name,
+                        'display_name': info['description'],
+                        'unit': info['unit'],
+                        'path': info['path'],
+                        'bounds': {
+                            'left': src.bounds.left,
+                            'bottom': src.bounds.bottom,
+                            'right': src.bounds.right,
+                            'top': src.bounds.top,
+                        },
+                        'crs': str(src.crs),
+                        'stats': {
+                            'min': float(np.min(valid_data)),
+                            'max': float(np.max(valid_data)),
+                            'mean': float(np.mean(valid_data)),
+                            'median': float(np.median(valid_data)),
+                        }
+                    })
+            except Exception as e:
+                layers.append({
+                    'name': param_name,
+                    'error': str(e)
+                })
+    
+    return JsonResponse({'layers': layers})
+
+
+@require_http_methods(["GET"])
+def soil_data_at_point(request):
+    """Extract soil data from all raster layers at a given point (lat, lon)"""
+    lat_str = request.GET.get('lat')
+    lon_str = request.GET.get('lon')
+    
+    if not lat_str or not lon_str:
+        return JsonResponse(
+            {'error': 'lat and lon parameters required'},
+            status=400
+        )
+    
+    try:
+        latitude = float(lat_str)
+        longitude = float(lon_str)
+    except ValueError:
+        return JsonResponse(
+            {'error': 'lat and lon must be numbers'},
+            status=400
+        )
+    
+    soil_data_path = BACKEND_ROOT / "data" / "soil data"
+    
+    soil_layers = {
+        'ph': 'ph/ph.tif',
+        'nitrogen': 'nitrogen/nitrogen.tif',
+        'phosphorus': 'phosphorus/p2o5.tif',
+        'potassium': 'potassium/k.tif',
+        'boron': 'boron/boron.tif',
+        'zinc': 'zinc/zinc.tif',
+        'clay': 'clay/clay.tif',
+        'sand': 'sand/sand.tif',
+        'silt': 'slit/slit.tif',
+        'organic': 'organic/organic.tif',
+    }
+
+    def read_nearest_value(src, latitude, longitude, max_radius=10):
+        row, col = src.index(longitude, latitude)
+        data = src.read(1)
+
+        if 0 <= row < src.height and 0 <= col < src.width:
+            value = data[int(row), int(col)]
+            if not np.isnan(value):
+                return float(value), None
+
+        for radius in range(1, max_radius + 1):
+            row_min = max(0, int(row) - radius)
+            row_max = min(src.height, int(row) + radius + 1)
+            col_min = max(0, int(col) - radius)
+            col_max = min(src.width, int(col) + radius + 1)
+
+            window = data[row_min:row_max, col_min:col_max]
+            valid_values = window[~np.isnan(window)]
+            if valid_values.size:
+                return float(valid_values.flat[0]), None
+
+        return None, 'No data at location'
+    
+    result = {
+        'latitude': latitude,
+        'longitude': longitude,
+        'parameters': {}
+    }
+    
+    for param_name, raster_path in soil_layers.items():
+        full_path = soil_data_path / raster_path
+        
+        if not full_path.exists():
+            result['parameters'][param_name] = {'value': None, 'error': 'File not found'}
+            continue
+        
+        try:
+            with rasterio.open(full_path) as src:
+                value, error = read_nearest_value(src, latitude, longitude)
+                if error:
+                    result['parameters'][param_name] = {'value': None, 'error': error}
+                else:
+                    result['parameters'][param_name] = {'value': value}
+        
+        except Exception as e:
+            result['parameters'][param_name] = {'value': None, 'error': str(e)}
+    
+    return JsonResponse(result)
+
+
+@require_http_methods(["GET"])
+def soil_reverse_district(request):
+    """Resolve district name from latitude/longitude using reverse geocoding."""
+    lat_str = request.GET.get('lat')
+    lon_str = request.GET.get('lon')
+
+    if not lat_str or not lon_str:
+        return JsonResponse({'error': 'lat and lon parameters required'}, status=400)
+
+    try:
+        latitude = float(lat_str)
+        longitude = float(lon_str)
+    except ValueError:
+        return JsonResponse({'error': 'lat and lon must be numbers'}, status=400)
+
+    try:
+        reverse_url = 'https://nominatim.openstreetmap.org/reverse'
+        query = urlencode(
+            {
+                'lat': latitude,
+                'lon': longitude,
+                'format': 'jsonv2',
+                'zoom': 10,
+                'addressdetails': 1,
+                'accept-language': 'en',
+            }
+        )
+        request_obj = Request(
+            f'{reverse_url}?{query}',
+            headers={'User-Agent': 'krishi-margadarshan/1.0'},
+        )
+
+        with urlopen(request_obj, timeout=10) as response:
+            payload = json.loads(response.read().decode('utf-8'))
+
+        address = payload.get('address') or {}
+        district_guess = (
+            address.get('county')
+            or address.get('state_district')
+            or address.get('city_district')
+            or address.get('municipality')
+            or address.get('city')
+            or ''
+        )
+
+        return JsonResponse(
+            {
+                'latitude': latitude,
+                'longitude': longitude,
+                'district_guess': district_guess,
+                'address': address,
+            }
+        )
+    except Exception as exc:
+        return JsonResponse(
+            {
+                'latitude': latitude,
+                'longitude': longitude,
+                'district_guess': '',
+                'error': str(exc),
+            },
+            status=200,
+        )

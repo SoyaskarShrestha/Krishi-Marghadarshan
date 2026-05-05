@@ -6,20 +6,7 @@
 # ─────────────────────────────────────────────────────────────
 
 from rest_framework import serializers
-from .ml_engine import all_districts
-
-SEASON_CHOICES = [
-    "Kharif (Summer)",
-    "Rabi (Winter)",
-    "Zaid (Spring)",
-]
-
-SOIL_TYPE_CHOICES = [
-    "Alluvial Sandy Loam", "Alluvial Clay Loam", "Alluvial Loam",
-    "Sandy Loam", "Clay", "Clay Loam", "Gravelly Loam",
-    "Red Sandy Loam", "Red Clay Loam", "Brown Loam", "Sandy Clay",
-    "Brown Forest Soil", "Alpine Meadow Soil", "Rocky Soil", "Stony Soil",
-]
+from .ml_engine import all_districts, SEASON_CHOICES, SOIL_TYPE_CHOICES
 
 
 class PredictInputSerializer(serializers.Serializer):

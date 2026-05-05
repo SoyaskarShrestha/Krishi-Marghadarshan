@@ -14,6 +14,24 @@ CAT_COLS = [
     "Agro_Zone", "Season", "Soil_Type",
 ]
 
+NEPAL_SEASON_CHOICES = [
+    "Spring",
+    "Summer",
+    "Monsoon",
+    "Autumn",
+    "Pre-Winter",
+    "Winter",
+]
+
+MODEL_SEASON_MAP = {
+    "spring": "Zaid (Spring)",
+    "summer": "Kharif (Summer)",
+    "monsoon": "Kharif (Summer)",
+    "autumn": "Kharif (Summer)",
+    "pre-winter": "Rabi (Winter)",
+    "winter": "Rabi (Winter)",
+}
+
 # Auto-fill Province / Region_Type / Agro_Zone from District
 DISTRICT_MAP = {
     "Taplejung": ("Province 1", "Mountain", "High Hills"),
@@ -101,6 +119,17 @@ def get_district_meta(district: str) -> dict:
     return {"Province": province, "Region_Type": region_type, "Agro_Zone": agro_zone}
 
 
+def normalize_season_for_model(season: str) -> str:
+    """Map Nepal season names from UI to the season labels used during model training."""
+    if not season:
+        raise ValueError("Season is required")
+
+    mapped = MODEL_SEASON_MAP.get(str(season).strip().lower())
+    if not mapped:
+        raise ValueError(f"Unknown season: '{season}'")
+    return mapped
+
+
 def predict_top3(data: dict, model, encoders, feature_names: list) -> list[dict]:
     """
     Run prediction and return top-3 crops with confidence scores.
@@ -144,11 +173,7 @@ def all_districts() -> list[str]:
     return sorted(DISTRICT_MAP.keys())
 
 
-SEASON_CHOICES = [
-    "Kharif (Summer)",
-    "Rabi (Winter)",
-    "Zaid (Spring)",
-]
+SEASON_CHOICES = list(NEPAL_SEASON_CHOICES)
 
 SOIL_TYPE_CHOICES = [
     "Alluvial Sandy Loam", "Alluvial Clay Loam", "Alluvial Loam",

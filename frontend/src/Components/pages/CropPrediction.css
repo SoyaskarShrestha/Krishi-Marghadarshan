@@ -127,6 +127,31 @@
 	cursor: wait;
 }
 
+.crop-predict-map-btn {
+	height: 44px;
+	border-radius: 10px;
+	border: 2px solid #27ae60;
+	padding: 0 16px;
+	background: #f0f7f3;
+	color: #27ae60;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	width: 100%;
+	margin-top: 12px;
+}
+
+.crop-predict-map-btn:hover {
+	background: #27ae60;
+	color: white;
+	box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+}
+
+.crop-predict-map-btn:active {
+	transform: scale(0.98);
+}
+
 .crop-predict-results {
 	display: grid;
 	grid-template-rows: auto 1fr;
