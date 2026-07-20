@@ -102,14 +102,6 @@ function UserProfile() {
 		isLoading: true,
 		hasError: false,
 	})
-	const [consultationSummary, setConsultationSummary] = useState({
-		availableAdvisors: null,
-		avgResponseMinutes: null,
-		myPendingQuestions: 0,
-		myAnsweredThisWeek: 0,
-		isLoading: true,
-		hasError: false,
-	})
 	const [weatherCard, setWeatherCard] = useState({
 		location: '',
 		alertLevel: 'low',
@@ -274,71 +266,6 @@ function UserProfile() {
 			window.clearInterval(weatherIntervalId)
 		}
 	}, [displayLocation])
-
-	useEffect(() => {
-		let ignore = false
-
-		async function loadConsultationSummary() {
-			setConsultationSummary((previous) => ({ ...previous, isLoading: true, hasError: false }))
-
-			try {
-				const payload = await apiRequest(API_ENDPOINTS.AUTH_CONSULTATION_SUMMARY)
-				if (!ignore) {
-					setConsultationSummary({
-						availableAdvisors: typeof payload?.available_advisors === 'number' ? payload.available_advisors : null,
-						avgResponseMinutes: typeof payload?.avg_response_minutes === 'number' ? payload.avg_response_minutes : null,
-						myPendingQuestions: typeof payload?.my_pending_questions === 'number' ? payload.my_pending_questions : 0,
-						myAnsweredThisWeek: typeof payload?.my_answered_this_week === 'number' ? payload.my_answered_this_week : 0,
-						isLoading: false,
-						hasError: false,
-					})
-				}
-			} catch {
-				if (!ignore) {
-					setConsultationSummary((previous) => ({
-						...previous,
-						isLoading: false,
-						hasError: true,
-					}))
-				}
-			}
-		}
-
-		loadConsultationSummary()
-		const consultationIntervalId = window.setInterval(loadConsultationSummary, 5 * 60 * 1000)
-
-		return () => {
-			ignore = true
-			window.clearInterval(consultationIntervalId)
-		}
-	}, [])
-
-	const formatDuration = (totalMinutes) => {
-		if (typeof totalMinutes !== 'number' || totalMinutes < 0) {
-			return null
-		}
-
-		const hours = Math.floor(totalMinutes / 60)
-		const minutes = totalMinutes % 60
-
-		if (hours === 0) {
-			return `${minutes}${t('userProfile.minuteShort')}`
-		}
-
-		if (minutes === 0) {
-			return `${hours}${t('userProfile.hourShort')}`
-		}
-
-		return `${hours}${t('userProfile.hourShort')} ${minutes}${t('userProfile.minuteShort')}`
-	}
-
-	const availabilityText = consultationSummary.isLoading
-		? t('userProfile.consultationsChecking')
-		: consultationSummary.hasError || consultationSummary.availableAdvisors === null
-			? t('userProfile.consultationsUnavailable')
-			: t('userProfile.consultationsAvailableNow', { count: consultationSummary.availableAdvisors })
-
-	const avgReplyText = formatDuration(consultationSummary.avgResponseMinutes)
 
 	const weatherAlertLabelByLevel = {
 		low: t('userProfile.weatherAlertRiskLow'),
@@ -559,19 +486,6 @@ function UserProfile() {
 						) : null}
 						<span className="member-link-hint">{t('userProfile.openWeatherDetails')}</span>
 					</Link>
-
-					<Link to="/advisory" className="member-card member-plain-card member-link-card">
-						<small>{t('userProfile.consultations')}</small>
-						<h3>{availabilityText}</h3>
-						<p className="member-consultation-meta"><span className="member-meta-icon pending" aria-hidden="true" />{t('userProfile.consultationsPendingQuestions', { count: consultationSummary.myPendingQuestions })}</p>
-						<p className="member-consultation-meta"><span className="member-meta-icon answered" aria-hidden="true" />{t('userProfile.consultationsAnsweredThisWeek', { count: consultationSummary.myAnsweredThisWeek })}</p>
-						<p className="member-consultation-meta">
-							{avgReplyText
-								? t('userProfile.consultationsAvgReply', { time: avgReplyText })
-								: t('userProfile.consultationsAvgReplyUnavailable')}
-						</p>
-						<span className="member-link-hint">{t('userProfile.openConsultationDetails')}</span>
-					</Link>
 				</section>
 
 				<section className="member-logout-section">
@@ -631,10 +545,10 @@ function UserProfile() {
 				brandClassName="member-footer-brand"
 				copyClassName="member-footer-copy"
 				links={[
-					{ to: '/advisory', label: t('common.supportCenters') },
+					{ to: '/', label: t('navbar.navigation.home') },
+					{ to: '/weather', label: t('navbar.navigation.weather') },
 					{ to: '/articles', label: t('common.faq') },
-					{ to: '/advisory', label: t('common.privacy') },
-					{ to: '/advisory', label: t('common.contact') },
+					{ to: '/shop', label: t('navbar.navigation.shop') },
 				]}
 			/>
 		</div>

@@ -261,15 +261,6 @@
   background: rgba(57, 58, 41, 0.1);
 }
 
-.home-quick-card.advisory {
-  background: #c7f0bb;
-  color: #002201;
-}
-
-.home-quick-card.advisory .home-icon-shell {
-  background: rgba(21, 66, 18, 0.1);
-}
-
 .home-feature {
   display: grid;
   grid-template-columns: 4.3fr 5.7fr;

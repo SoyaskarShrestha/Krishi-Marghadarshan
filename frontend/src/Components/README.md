@@ -6,10 +6,9 @@ Use this folder as the single source for shared UI and page-level components.
 
 - `pages/`: route-level pages (`Homepage`, `Shop`, `Cart`, etc.)
 - `auth/`: authentication and profile completion pages
-- `guards/`: route access wrappers (`ProtectedRoute`, `AdminRoute`, `AdvisorRoute`)
+- `guards/`: route access wrappers (`ProtectedRoute`, `AdminRoute`)
 - `layout/`: shared chrome (`NavBar`, `Footer`)
 - `admin/`: admin-only views
-- `advisor/`: advisor-only views
 
 ## How to add components
 

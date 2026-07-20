@@ -16,12 +16,7 @@ export const API_ENDPOINTS = {
 	ARTICLES_SAVED: import.meta.env.VITE_API_ARTICLES_SAVED || '/articles/saved/',
 	SHOP_PRODUCTS: import.meta.env.VITE_API_SHOP_PRODUCTS || '/shop/products/',
 	SHOP_CART: import.meta.env.VITE_API_SHOP_CART || '/shop/cart/',
-	ADVISORY_META: import.meta.env.VITE_API_ADVISORY_META || '/advisory/meta/',
-	ADVISORY_QUESTIONS: import.meta.env.VITE_API_ADVISORY_QUESTIONS || '/advisory/questions/',
 	WEATHER_FORECAST: import.meta.env.VITE_API_WEATHER_FORECAST || '/weather/forecast/',
-	CHATBOT_MESSAGE: import.meta.env.VITE_API_CHATBOT_MESSAGE || '/chatbot/message/',
-	CROP_PREDICT: import.meta.env.VITE_API_CROP_PREDICT || '/predict/',
-	CROP_PREDICT_OPTIONS: import.meta.env.VITE_API_CROP_PREDICT_OPTIONS || '/predict/options/',
 }
 
 export function getAccessToken() {

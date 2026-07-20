@@ -1,10 +1,3 @@
-# crop/views.py
-# ─────────────────────────────────────────────────────────────
-# Three endpoints:
-#   POST /api/predict/          → single prediction
-#   POST /api/predict/batch/    → up to 100 predictions
-#   GET  /api/predict/options/  → valid dropdown values
-# ─────────────────────────────────────────────────────────────
 
 from django.apps import apps
 from rest_framework.views import APIView
@@ -38,40 +31,7 @@ def _build_full_input(validated_data: dict) -> dict:
 #  1.  POST /api/predict/
 # ══════════════════════════════════════════════════════════════
 class PredictView(APIView):
-    """
-    Predict the best 3 crops for a single location.
-
-    Request body (JSON):
-    {
-        "District":           "Jhapa",
-        "Season":             "Kharif (Summer)",
-        "Soil_Type":          "Alluvial Clay Loam",
-        "Altitude_m":         100,
-        "Avg_Temperature_C":  28.5,
-        "Annual_Rainfall_mm": 1800,
-        "Humidity_pct":       80,
-        "Soil_pH":            6.8,
-        "Nitrogen_kg_ha":     280,
-        "Phosphorus_kg_ha":   55,
-        "Potassium_kg_ha":    200
-    }
-
-    Response:
-    {
-        "success": true,
-        "location": {
-            "district": "Jhapa",
-            "province": "Province 1",
-            "region":   "Terai",
-            "zone":     "Terai"
-        },
-        "predictions": [
-            {"rank": 1, "crop": "Rice",  "confidence_pct": 91.3},
-            {"rank": 2, "crop": "Maize", "confidence_pct":  6.2},
-            {"rank": 3, "crop": "Jute",  "confidence_pct":  2.5}
-        ]
-    }
-    """
+   
 
     def post(self, request):
         if not _model_ready():
@@ -117,27 +77,7 @@ class PredictView(APIView):
 #  2.  POST /api/predict/batch/
 # ══════════════════════════════════════════════════════════════
 class BatchPredictView(APIView):
-    """
-    Predict crops for multiple locations in a single request (max 100).
 
-    Request body:
-    {
-        "records": [
-            {"District": "Jhapa",  "Season": "Kharif (Summer)", ...},
-            {"District": "Kaski",  "Season": "Rabi (Winter)",   ...},
-        ]
-    }
-
-    Response:
-    {
-        "success": true,
-        "count": 2,
-        "results": [
-            {"index": 0, "success": true,  "predictions": [...]},
-            {"index": 1, "success": false, "error": "..."}
-        ]
-    }
-    """
 
     def post(self, request):
         if not _model_ready():

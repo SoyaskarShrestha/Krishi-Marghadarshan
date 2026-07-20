@@ -1,14 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import {
-	Advisory,
 	AdminDashboard,
 	AdminRoute,
-	AdvisorPanel,
-	AdvisorRoute,
 	Articles,
 	Cart,
-	Chatbot,
-	CropPrediction,
 	CompleteProfile,
 	Homepage,
 	Login,
@@ -34,9 +29,6 @@ function AppRoutes() {
 					</ProtectedRoute>
 				)}
 			/>
-			<Route path="/advisory" element={<Advisory />} />
-			<Route path="/chatbot" element={<Chatbot />} />
-			<Route path="/crop-prediction" element={<CropPrediction />} />
 			<Route path="/signup" element={<SignUp />} />
 			<Route path="/complete-profile" element={<CompleteProfile />} />
 			<Route path="/login" element={<Login />} />
@@ -46,14 +38,6 @@ function AppRoutes() {
 					<ProtectedRoute>
 						<UserProfile />
 					</ProtectedRoute>
-				)}
-			/>
-			<Route
-				path="/advisor-panel"
-				element={(
-					<AdvisorRoute>
-						<AdvisorPanel />
-					</AdvisorRoute>
 				)}
 			/>
 			<Route

@@ -7,8 +7,6 @@ import { API_ENDPOINTS, apiRequest } from '../../lib/api'
 import { useTranslation } from 'react-i18next'
 import featuredImage from '../../assets/homepage/featured.jpg'
 import heroImage from '../../assets/homepage/hero.jpg'
-import advisoryIcon from '../../assets/homepage/icons/advisory.svg'
-import advisoryArrowIcon from '../../assets/homepage/icons/advisory-arrow.svg'
 import articlesIcon from '../../assets/homepage/icons/articles.svg'
 import articlesArrowIcon from '../../assets/homepage/icons/articles-arrow.svg'
 import bookmarkIcon from '../../assets/homepage/icons/bookmark.svg'
@@ -27,11 +25,11 @@ function Homepage() {
 	const { t } = useTranslation()
 	const quickAccess = useMemo(
 		() =>
-			t('home.quickAccess', { returnObjects: true }).map((item, index) => ({
+			t('home.quickAccess', { returnObjects: true }).slice(0, 3).map((item, index) => ({
 				...item,
-				icon: [weatherIcon, articlesIcon, marketplaceIcon, advisoryIcon][index],
-				ctaIcon: [weatherArrowIcon, articlesArrowIcon, marketplaceArrowIcon, advisoryArrowIcon][index],
-				href: ['/weather', '/articles', '/shop', '/advisory'][index],
+				icon: [weatherIcon, articlesIcon, marketplaceIcon][index],
+				ctaIcon: [weatherArrowIcon, articlesArrowIcon, marketplaceArrowIcon][index],
+				href: ['/weather', '/articles', '/shop'][index],
 			})),
 		[t]
 	)
@@ -135,12 +133,6 @@ function Homepage() {
 							</Link>
 						</div>
 					</div>
-					<div className="home-hero-panel">
-						<div className="home-hero-panel-chip">{t('home.advisoryPanelBadge')}</div>
-						<h3>{t('home.advisoryPanelTitle')}</h3>
-						<p>{t('home.advisoryPanelBody')}</p>
-						<Link to="/advisory">{t('home.advisoryPanelLink')}</Link>
-					</div>
 				</section>
 
 				<section className="home-quick-grid" data-node-id="2:469">
@@ -234,10 +226,10 @@ function Homepage() {
 				footerProps={{ 'data-node-id': '2:593' }}
 				innerProps={{ 'data-node-id': '2:594' }}
 				links={[
-					{ to: '/advisory', label: t('common.supportCenters') },
+					{ to: '/', label: t('navbar.navigation.home') },
+					{ to: '/weather', label: t('navbar.navigation.weather') },
 					{ to: '/articles', label: t('common.faq') },
-					{ to: '/advisory', label: t('common.privacy') },
-					{ to: '/advisory', label: t('common.contact') },
+					{ to: '/shop', label: t('navbar.navigation.shop') },
 				]}
 			/>
 		</div>

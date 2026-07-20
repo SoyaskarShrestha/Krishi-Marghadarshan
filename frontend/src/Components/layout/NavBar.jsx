@@ -1,6 +1,5 @@
 ﻿import { NavLink } from 'react-router-dom'
 import bagIcon from '../../assets/navbar/bag.svg'
-import chatbotIcon from '../../assets/navbar/chatbot.svg'
 import languageIcon from '../../assets/navbar/language.svg'
 import profileSimpleIcon from '../../assets/navbar/profile-simple.svg'
 import searchIcon from '../../assets/navbar/search.svg'
@@ -28,10 +27,6 @@ function NavBar({
 		weather: t('navbar.navigation.weather'),
 		articles: t('navbar.navigation.articles'),
 		shop: t('navbar.navigation.shop'),
-		advisory: t('navbar.navigation.advisory'),
-		cropPrediction: t('navbar.navigation.cropPrediction', { defaultValue: 'Crop Prediction' }),
-		chatbot: t('navbar.navigation.chatbot', { defaultValue: 'Chatbot' }),
-		advisorPanel: t('navbar.navigation.advisorPanel', { defaultValue: 'Advisor Panel' }),
 		language: isNepali ? t('navbar.language.en') : t('navbar.language.ne'),
 		profile: t('navbar.navigation.profile'),
 	}
@@ -58,17 +53,6 @@ function NavBar({
 					<NavLink to="/weather" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.weather}</NavLink>
 					<NavLink to="/articles" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.articles}</NavLink>
 					<NavLink to="/shop" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.shop}</NavLink>
-					<NavLink to="/advisory" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.advisory}</NavLink>
-					<NavLink to="/crop-prediction" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.cropPrediction}</NavLink>
-					<NavLink to="/chatbot" className={({ isActive }) => `navbar-chatbot-link ${isActive ? 'active' : ''}`}>
-						<span className="navbar-inline-icon">
-							<img src={chatbotIcon} alt="" aria-hidden="true" className="navbar-icon-image" />
-						</span>
-						<span>{labels.chatbot}</span>
-					</NavLink>
-					{currentUser?.isAdvisor ? (
-						<NavLink to="/advisor-panel" className={({ isActive }) => (isActive ? 'active' : '')}>{labels.advisorPanel}</NavLink>
-					) : null}
 					{currentUser?.isAdmin ? (
 						<NavLink to="/admin-dashboard" className={({ isActive }) => (isActive ? 'active' : '')}>Admin</NavLink>
 					) : null}

@@ -316,10 +316,10 @@ function WeatherForecast() {
 				brand={t('common.brand')}
 				copy={t('common.footerCopy')}
 				links={[
-					{ to: '/advisory', label: t('common.supportCenters') },
+					{ to: '/', label: t('navbar.navigation.home') },
+					{ to: '/weather', label: t('navbar.navigation.weather') },
 					{ to: '/articles', label: t('common.faq') },
-					{ to: '/advisory', label: t('common.privacy') },
-					{ to: '/advisory', label: t('common.contact') },
+					{ to: '/shop', label: t('navbar.navigation.shop') },
 				]}
 			/>
 		</div>
