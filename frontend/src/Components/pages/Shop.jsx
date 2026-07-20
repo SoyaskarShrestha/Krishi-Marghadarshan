@@ -1,7 +1,8 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import './Shop.css'
+import '../admin/AdminDashboard.css'
 import NavBar from '../layout/NavBar'
 import Footer from '../layout/Footer'
 import { API_ENDPOINTS, apiRequest } from '../../lib/api'
@@ -9,9 +10,6 @@ import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import heroImage from '../../assets/shop/hero.png'
 import exploreArrowIcon from '../../assets/shop/icons/explore-arrow.svg'
-import adviceGearIcon from '../../assets/shop/icons/advice-gear.svg'
-import truckIcon from '../../assets/shop/icons/truck.svg'
-import pinIcon from '../../assets/shop/icons/pin.svg'
 import checkIcon from '../../assets/shop/icons/check.svg'
 import cartIcon from '../../assets/shop/icons/cart.svg'
 import sortIcon from '../../assets/shop/icon-sort.svg'
@@ -25,6 +23,15 @@ import productImage6 from '../../assets/shop/product-6.jpg'
 const productImages = [productImage1, productImage2, productImage3, productImage4, productImage5, productImage6]
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
 const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, '')
+
+const emptyProductForm = {
+	name: '',
+	category: '',
+	price: '',
+	description: '',
+	badge: '',
+	badge_tone: '',
+}
 
 function parsePriceValue(value) {
 	if (typeof value === 'number' && Number.isFinite(value)) {
@@ -55,10 +62,24 @@ function resolveProductImage(photo, index) {
 	return productImages[index % productImages.length]
 }
 
+function mapProductPayload(product, index) {
+	return {
+		id: product.id,
+		name: product.name,
+		category: product.category || 'General',
+		priceValue: parsePriceValue(product.price),
+		priceDisplay: formatPriceValue(product.price),
+		description: product.description,
+		image: resolveProductImage(product.photo, index),
+		badge: product.badge || '',
+		badgeTone: product.badge_tone || 'light',
+	}
+}
+
 function Shop() {
 	const { t } = useTranslation()
 	const navigate = useNavigate()
-	const { isAuthenticated } = useAuth()
+	const { isAuthenticated, isFarmer } = useAuth()
 	const baseCategories = useMemo(
 		() => [
 			{ value: 'all', label: t('shop.allProducts'), checked: true },
@@ -91,53 +112,47 @@ function Shop() {
 	const [shopError, setShopError] = useState('')
 	const [actionMessage, setActionMessage] = useState('')
 	const [cartCount, setCartCount] = useState(0)
-	const [priceRange, setPriceRange] = useState({ min: 0, max: 100000 })
+	const [priceRange, setPriceRange] = useState({ min: 0, max: 0 })
+	const [priceRangeTouched, setPriceRangeTouched] = useState(false)
 	const [sortMode, setSortMode] = useState('popularity')
 	const [activePriceThumb, setActivePriceThumb] = useState('max')
+	const [isAddProductOpen, setIsAddProductOpen] = useState(false)
+	const [productForm, setProductForm] = useState(emptyProductForm)
+	const [productPhoto, setProductPhoto] = useState(null)
+	const isProductsMountedRef = useRef(false)
 	const [selectedCategories, setSelectedCategories] = useState(() =>
 		baseCategories.filter((category) => category.checked).map((category) => category.value)
 	)
 
-	useEffect(() => {
-		let ignore = false
+	const loadProducts = useCallback(async () => {
+		try {
+			const payload = await apiRequest(API_ENDPOINTS.SHOP_PRODUCTS)
+			if (!Array.isArray(payload) || !isProductsMountedRef.current) {
+				return
+			}
 
-		async function loadProducts() {
-			try {
-				const payload = await apiRequest(API_ENDPOINTS.SHOP_PRODUCTS)
-				if (!Array.isArray(payload) || ignore) {
-					return
-				}
+			const mapped = payload.map((product, index) => mapProductPayload(product, index))
 
-				const mapped = payload.map((product, index) => ({
-					id: product.id,
-					name: product.name,
-					category: product.category || 'General',
-					priceValue: parsePriceValue(product.price),
-					priceDisplay: formatPriceValue(product.price),
-					description: product.description,
-					image: resolveProductImage(product.photo, index),
-					badge: product.badge || '',
-					badgeTone: product.badge_tone || 'light',
-				}))
-
-				if (mapped.length > 0) {
-					setProducts(mapped)
-				}
-				setIsUsingFallbackProducts(false)
-				setShopError('')
-			} catch {
-				if (!ignore) {
-					setShopError(t('shop.fallbackError'))
-				}
+			setProducts(mapped)
+			setIsUsingFallbackProducts(false)
+			setShopError('')
+		} catch {
+			if (isProductsMountedRef.current) {
+				setShopError(t('shop.fallbackError'))
 			}
 		}
+	}, [t])
 
-		loadProducts()
+	useEffect(() => {
+		isProductsMountedRef.current = true
+		queueMicrotask(() => {
+			void loadProducts()
+		})
 
 		return () => {
-			ignore = true
+			isProductsMountedRef.current = false
 		}
-		}, [t])
+	}, [loadProducts])
 
 	useEffect(() => {
 		let ignore = false
@@ -164,6 +179,64 @@ function Shop() {
 			ignore = true
 		}
 	}, [])
+
+	const resetProductForm = () => {
+		setProductForm(emptyProductForm)
+		setProductPhoto(null)
+	}
+
+	const openAddProduct = () => {
+		resetProductForm()
+		setActionMessage('')
+		setIsAddProductOpen(true)
+	}
+
+	const closeAddProduct = () => {
+		setIsAddProductOpen(false)
+		resetProductForm()
+	}
+
+	const onProductInput = (event) => {
+		const { name, value } = event.target
+		setProductForm((current) => ({ ...current, [name]: value }))
+	}
+
+	const onProductPhotoChange = (event) => {
+		setProductPhoto(event.target.files?.[0] || null)
+	}
+
+	const saveProduct = async (event) => {
+		event.preventDefault()
+
+		try {
+			const payload = new FormData()
+			payload.append('name', productForm.name)
+			payload.append('category', productForm.category)
+			payload.append('price', String(Number(productForm.price || 0)))
+			payload.append('description', productForm.description)
+			payload.append('badge', productForm.badge)
+			payload.append('badge_tone', productForm.badge_tone)
+			if (productPhoto) {
+				payload.append('photo', productPhoto)
+			}
+
+			const response = await apiRequest(API_ENDPOINTS.SHOP_PRODUCTS, {
+				method: 'POST',
+				body: payload,
+			})
+
+			if (response && typeof response === 'object') {
+				await loadProducts()
+			}
+
+			setIsUsingFallbackProducts(false)
+			setShopError('')
+			setActionMessage(t('shop.productAdded', { defaultValue: 'Your product has been added to the shop.' }))
+			closeAddProduct()
+		} catch (error) {
+			setActionMessage(error.message || t('shop.productAddError', { defaultValue: 'Unable to add your product.' }))
+		}
+	}
 
 	const categories = useMemo(() => {
 		const fromProducts = Array.from(new Set(products.map((product) => product.category).filter(Boolean))).map((label) => ({
@@ -200,8 +273,13 @@ function Shop() {
 		}
 	}, [uniqueProducts])
 	const isPriceRangeLocked = priceBounds.min === priceBounds.max
+
 	const normalizedPriceRange = useMemo(() => {
 		if (isPriceRangeLocked) {
+			return { min: priceBounds.min, max: priceBounds.max }
+		}
+
+		if (!priceRangeTouched) {
 			return { min: priceBounds.min, max: priceBounds.max }
 		}
 
@@ -213,7 +291,7 @@ function Shop() {
 		}
 
 		return { min: clampedMax, max: clampedMin }
-	}, [isPriceRangeLocked, priceBounds.max, priceBounds.min, priceRange.max, priceRange.min])
+	}, [isPriceRangeLocked, priceBounds.max, priceBounds.min, priceRange.max, priceRange.min, priceRangeTouched])
 
 	const visibleProducts = useMemo(() => {
 		return uniqueProducts.filter((product) => {
@@ -254,6 +332,7 @@ function Shop() {
 		}
 
 		const value = Number(rawValue)
+		setPriceRangeTouched(true)
 		setPriceRange((current) => {
 			if (field === 'min') {
 				return { min: Math.min(value, current.max), max: current.max }
@@ -318,26 +397,15 @@ function Shop() {
 						</div>
 					</article>
 
-					<div className="shop-side-cards" data-node-id="2:229">
-						<article className="shop-side-card advice" data-node-id="2:230">
-							<div className="shop-side-card-copy">
-								<h3>{t('shop.expertAdviceTitle')}</h3>
-								<p>{t('shop.expertAdviceBody')}</p>
-							</div>
-							<img src={adviceGearIcon} alt="" aria-hidden="true" className="shop-side-card-decor" />
+					{isFarmer ? (
+						<article className="admin-card shop-add-product-panel" data-node-id="2:229">
+							<h3>{t('shop.addProduct', { defaultValue: 'Add Product' })}</h3>
+							<p>{t('shop.addProductIntro', { defaultValue: 'Share produce, inputs, or farm essentials directly with buyers.' })}</p>
+							<button type="button" className="shop-add-product-trigger" onClick={openAddProduct}>
+								{t('shop.addProduct', { defaultValue: 'Add Product' })}
+							</button>
 						</article>
-
-						<article className="shop-side-card delivery" data-node-id="2:242">
-							<div className="shop-side-card-copy">
-								<h3>{t('shop.fastDeliveryTitle')}</h3>
-								<p>{t('shop.fastDeliveryBody')}</p>
-								<div className="shop-side-icons">
-									<img src={truckIcon} alt="" aria-hidden="true" />
-									<img src={pinIcon} alt="" aria-hidden="true" />
-								</div>
-							</div>
-						</article>
-					</div>
+					) : null}
 				</section>
 
 				<section className="shop-catalog" data-node-id="2:249">
@@ -467,6 +535,40 @@ function Shop() {
 					</div>
 				</section>
 			</main>
+
+			{isFarmer && isAddProductOpen ? (
+				<div className="admin-modal-backdrop shop-product-modal-backdrop" role="presentation" onClick={closeAddProduct}>
+					<div
+						className="admin-modal shop-product-modal"
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="add-product-title"
+						onClick={(event) => event.stopPropagation()}
+					>
+						<h3 id="add-product-title">{t('shop.addProduct', { defaultValue: 'Add Product' })}</h3>
+						<p>{t('shop.addProductIntro', { defaultValue: 'Share a product from your farm for customers to discover in the shop.' })}</p>
+						<form onSubmit={saveProduct} className="admin-form shop-product-form">
+							<input name="name" value={productForm.name} onChange={onProductInput} placeholder="Name" required />
+							<input name="category" value={productForm.category} onChange={onProductInput} placeholder="Category" required />
+							<input name="price" type="number" step="0.01" value={productForm.price} onChange={onProductInput} placeholder="Price" required />
+							<textarea name="description" value={productForm.description} onChange={onProductInput} placeholder="Description" required />
+							<input name="badge" value={productForm.badge} onChange={onProductInput} placeholder="Badge" />
+							<input name="badge_tone" value={productForm.badge_tone} onChange={onProductInput} placeholder="Badge tone" />
+							<label className="admin-file-input">
+								<span>Product image</span>
+								<input name="photo" type="file" accept="image/*" onChange={onProductPhotoChange} />
+							</label>
+							{productPhoto ? <p className="admin-file-hint">Selected file: {productPhoto.name}</p> : null}
+							<div className="admin-actions">
+								<button type="submit">{t('shop.createProduct', { defaultValue: 'Create Product' })}</button>
+								<button type="button" className="admin-secondary" onClick={closeAddProduct}>
+									{t('common.cancel', { defaultValue: 'Cancel' })}
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			) : null}
 
 			<Footer
 				footerClassName="shop-footer"

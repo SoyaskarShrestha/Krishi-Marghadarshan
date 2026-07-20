@@ -11,20 +11,32 @@ function normalizeUser(user) {
 		return null
 	}
 
+	const role = user.profile?.user_type || user.profile?.userType || user.role || 'buyer'
+	const isAdmin = Boolean(user.is_superuser)
+	const isAdvisor = Boolean(role === 'advisor' || user.is_staff || user.is_superuser)
+	const isFarmer = Boolean(role === 'farmer' && !isAdvisor && !isAdmin)
+	const isBuyer = Boolean(role === 'buyer' && !isAdvisor && !isAdmin)
+	const accessRole = isAdmin ? 'admin' : isAdvisor ? 'advisor' : isFarmer ? 'farmer' : 'buyer'
+
 	return {
 		id: user.id,
 		name: user.username || user.name || user.email,
 		email: user.email,
 		provider: user.provider || 'password',
+		role,
+		accessRole,
 		isStaff: Boolean(user.is_staff),
-		isSuperuser: Boolean(user.is_superuser),
-		isAdvisor: Boolean(user.is_staff || user.is_superuser),
-		isAdmin: Boolean(user.is_superuser),
+		isSuperuser: isAdmin,
+		isAdvisor,
+		isFarmer,
+		isBuyer,
+		isAdmin,
 		profile: {
 			fullName: user.profile?.full_name || user.profile?.fullName || '',
 			location: user.profile?.location || '',
 			cropType: user.profile?.crop_type || user.profile?.cropType || '',
 			phone: user.profile?.phone || '',
+			userType: role,
 			profilePhoto: user.profile?.profile_photo || user.profile?.profilePhoto || '',
 		},
 	}
@@ -35,7 +47,7 @@ function isProfileComplete(user) {
 		return false
 	}
 
-	return Boolean(user.profile.location?.trim() && user.profile.cropType?.trim() && user.profile.phone?.trim())
+	return Boolean(user.profile.location?.trim() && user.profile.cropType?.trim() && user.profile.phone?.trim() && user.profile.userType?.trim())
 }
 
 function mapOAuthError(error) {
@@ -158,7 +170,7 @@ export function AuthProvider({ children }) {
 		}
 	}
 
-	const updateProfile = async ({ email, username, fullName, location, cropType, phone }) => {
+	const updateProfile = async ({ email, username, fullName, location, cropType, phone, userType }) => {
 		try {
 			const endpoint = currentUser ? API_ENDPOINTS.AUTH_PROFILE : API_ENDPOINTS.AUTH_COMPLETE_PROFILE
 			const method = currentUser ? 'PUT' : 'POST'
@@ -171,6 +183,7 @@ export function AuthProvider({ children }) {
 					location,
 					cropType,
 					phone,
+					userType,
 				}),
 			})
 
@@ -269,8 +282,10 @@ export function AuthProvider({ children }) {
 		currentUser,
 		isAuthReady,
 		isAuthenticated: Boolean(currentUser),
+		isFarmer: Boolean(currentUser?.isFarmer),
 		isAdvisor: Boolean(currentUser?.isAdvisor),
 		isAdmin: Boolean(currentUser?.isAdmin),
+		accessRole: currentUser?.accessRole || 'buyer',
 		isProfileComplete,
 		signUp,
 		signUpWithProvider,

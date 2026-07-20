@@ -17,11 +17,22 @@ class User(AbstractUser):
 
 
 class UserProfile(models.Model):
+    USER_TYPE_FARMER = "farmer"
+    USER_TYPE_ADVISOR = "advisor"
+    USER_TYPE_BUYER = "buyer"
+
+    USER_TYPE_CHOICES = (
+        (USER_TYPE_FARMER, "Farmer"),
+        (USER_TYPE_ADVISOR, "Advisor"),
+        (USER_TYPE_BUYER, "Buyer"),
+    )
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     full_name = models.CharField(max_length=255, blank=True)
     location = models.CharField(max_length=255, blank=True)
     crop_type = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=50, blank=True)
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default=USER_TYPE_BUYER)
     profile_photo = models.ImageField(upload_to="profile_photos/", blank=True, null=True)
 
     def __str__(self):
