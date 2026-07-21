@@ -71,7 +71,7 @@ export function AuthProvider({ children }) {
 			try {
 				const user = await apiRequest(API_ENDPOINTS.AUTH_ME)
 				if (!ignore) {
-					setCurrentUser(normalizeUser(user))
+					setCurrentUser(normalizeUser(user?.user ?? user))
 				}
 			} catch {
 				if (!ignore) {

@@ -9,7 +9,7 @@ import './Auth.css'
 function CompleteProfile() {
 	const navigate = useNavigate()
 	const location = useLocation()
-	const { updateProfile } = useAuth()
+	const { currentUser, updateProfile } = useAuth()
 	const { t } = useTranslation()
 	const signupEmail = location.state?.email || ''
 	const [formData, setFormData] = useState({
@@ -36,9 +36,9 @@ function CompleteProfile() {
 			return
 		}
 
-		navigate('/login', {
+		navigate(currentUser ? '/user-profile' : '/login', {
 			replace: true,
-			state: { message: result.message },
+			state: currentUser ? undefined : { message: result.message },
 		})
 	}
 
