@@ -1,5 +1,7 @@
 .auth-page {
 	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
 	background:
 		radial-gradient(circle at 15% 10%, rgba(90, 136, 73, 0.2), transparent 35%),
 		linear-gradient(180deg, #edf6e8 0%, #f9fcf8 50%, #ffffff 100%);
@@ -7,6 +9,7 @@
 }
 
 .auth-main {
+	flex: 1;
 	display: grid;
 	place-items: center;
 	padding: 3rem 1.25rem;

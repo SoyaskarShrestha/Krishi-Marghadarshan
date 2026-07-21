@@ -94,9 +94,9 @@ function Login() {
 						<button type="button" className="auth-button oauth" onClick={() => handleOAuthLogin('Google')}>
 							{t('auth.login.google')}
 						</button>
-						<button type="button" className="auth-button oauth" onClick={() => handleOAuthLogin('GitHub')}>
+						{/* <button type="button" className="auth-button oauth" onClick={() => handleOAuthLogin('GitHub')}>
 							{t('auth.login.github')}
-						</button>
+						</button> */}
 					</div>
 
 					<p className="auth-switch-text">
